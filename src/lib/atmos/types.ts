@@ -49,6 +49,33 @@ export interface Evidence {
   multivariate: number;
 }
 
+export interface AuditStep {
+  id: string;
+  label: string;
+  detail: string;
+  result: string;
+  status: "pass" | "warn" | "fail";
+  deltaMs: number;
+}
+
+export interface HealthImpact {
+  scoreDrop: number;
+  priorScore: number;
+  projectedScore: number;
+  riskCategory: HealthState;
+  varianceMultiplier: number;
+}
+
+export interface AdaptiveBaseline {
+  historicalMean: number;
+  expectedMin: number;
+  expectedMax: number;
+  recentTrend: string;
+  volatility: number;
+  currentValue: number;
+  deviation: number;
+}
+
 export interface Assessment {
   anomalous: boolean;
   type: AnomalyType;
@@ -68,6 +95,8 @@ export interface Assessment {
     method: string;
     confidence: number;
   };
+  auditTrail: AuditStep[];
+  healthImpact: HealthImpact;
 }
 
 export interface AnomalyRecord extends Assessment {

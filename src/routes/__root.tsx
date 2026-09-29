@@ -79,13 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "A.T.M.O.S — AWS Monitoring Console" },
+      { title: "A.T.M.O.S — Adaptive Tracking & Monitoring of Observational Sensors" },
       {
         name: "description",
         content:
-          "Adaptive Tracking & Monitoring of Observational Sensors — anomaly detection console for Automatic Weather Stations.",
+          "A.T.M.O.S (Adaptive Tracking & Monitoring of Observational Sensors) — intelligent monitoring, anomaly detection and quality control console for Automatic Weather Stations.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "A.T.M.O.S" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
@@ -96,7 +97,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,

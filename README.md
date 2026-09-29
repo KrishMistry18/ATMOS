@@ -52,14 +52,46 @@ src/routes/                                       one route per page
 Technology: TanStack Start (React 19), TanStack Router, Tailwind CSS v4 design tokens, Recharts,
 Radix/shadcn primitives, TypeScript.
 
-## Demo instructions
+## Getting Started Locally
 
-1. Open **Overview** — the network is healthy and telemetry is streaming.
-2. In the **Simulation Mode** panel choose **Temperature Spike**.
-3. AWS-003 jumps to 55°C while its neighbours stay near 31°C; the critical and active-anomaly
-   counters rise.
-4. Open **Anomalies** and click the new record to inspect evidence, spatial consensus, root cause,
-   recommended action and the self-healing estimate.
-5. Check **Sensor Health** for the degradation impact, and **Network Map** for the spatial view.
-6. Use **Reset** to return the network to normal, or try Drift, Frozen Sensor, Sudden Drop,
-   Missing Packet, Communication Delay and Regional Weather Event.
+```bash
+# Install dependencies
+bun install   # or npm install
+
+# Start development server
+bun dev       # or npm run dev
+
+# Run typecheck
+bun x tsc --noEmit
+
+# Production build
+bun run build # or npm run build
+```
+
+## Vercel Deployment
+
+The application is pre-configured for Vercel deployment:
+- **Build Command**: `bun run build` (or `npm run build` with `NITRO_PRESET=vercel`)
+- **Output Directory**: `.output` / `.vercel/output`
+- **Framework Preset**: Other / Vite / Nitro
+
+## Primary SIH Demo Flow
+
+1. Open **Overview** — observe the nominal 8-station telemetry grid streaming every 1.5s.
+2. Click **"Trigger 55°C Spike"** (or select **Temperature Spike** in the control panel).
+3. **AWS-003** jumps to **55.0°C** (+23.2°C deviation) while neighboring stations stay normal (~31.1°C).
+4. The **Active Anomalies** KPI increases, the live banner highlights the spike, and station health drops.
+5. Click **"Inspect Anomaly Detail"** to review:
+   - **Type**: SPIKE
+   - **Severity**: 91%
+   - **Confidence**: 96%
+   - **Adaptive Baseline**: Expected ~31.8°C vs Observed 55.0°C (+23.2°C delta)
+   - **Evidence**: Adaptive baseline deviation (97%), High rate of change (92%), Spatial disagreement (94%), Multivariate inconsistency (82%)
+   - **Root Cause**: Probable sensor anomaly
+   - **Recommended Action**: Inspect sensor; verify calibration and local conditions
+   - **Spatial Consensus**: Target anomalous, neighbors normal, spatial disagreement HIGH
+   - **Sensor Health Impact**: Score drop (-24 pts), projected WATCH/DEGRADED state
+   - **Self-Healing QC Reconstruction**: Measured 55.0°C preserved; Estimated 31.8°C (93% confidence)
+   - **Audit Timeline**: Step-by-step verification trace from T-0ms to T+88ms.
+6. Navigate to **Stations**, **Sensor Health**, **Network Map**, **Analytics**, and **System Intelligence** to verify network-wide reactivity.
+7. Click **Reset** to return the grid to normal, or test the remaining fault scenarios (Drift, Frozen Sensor, Sudden Drop, Missing Packet, Communication Delay, Regional Weather Event).

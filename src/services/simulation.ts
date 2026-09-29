@@ -2,15 +2,20 @@ import type { Observation, ScenarioId, Station } from "@/lib/atmos/types";
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-/** Deterministic "expected" behaviour of a healthy station at a given tick. */
+function round(v: number, p = 1) {
+  const f = 10 ** p;
+  return Math.round(v * f) / f;
+}
+
+/** Deterministic "expected" baseline behaviour of a healthy station at a given tick. */
 export function baselineObservation(station: Station, tick: number) {
   const s = station.seed;
   const temperature =
-    station.baseTemp + 1.8 * Math.sin((tick + s * 10) / 28) + 0.45 * Math.sin((tick * s) / 5);
+    station.baseTemp + 1.6 * Math.sin((tick + s * 10) / 32) + 0.35 * Math.sin((tick * s) / 6);
   const pressure =
-    station.basePressure + 2.4 * Math.sin((tick + s * 7) / 40) + 0.3 * Math.sin(tick / 3 + s);
+    station.basePressure + 2.2 * Math.sin((tick + s * 7) / 42) + 0.25 * Math.sin(tick / 3 + s);
   const humidity = clamp(
-    station.baseHumidity - 1.6 * (temperature - station.baseTemp) + 2 * Math.sin((tick + s) / 33),
+    station.baseHumidity - 1.5 * (temperature - station.baseTemp) + 1.8 * Math.sin((tick + s) / 33),
     45,
     92,
   );
@@ -19,11 +24,6 @@ export function baselineObservation(station: Station, tick: number) {
     pressure: round(pressure, 1),
     humidity: round(humidity, 1),
   };
-}
-
-function round(v: number, p = 1) {
-  const f = 10 ** p;
-  return Math.round(v * f) / f;
 }
 
 export interface SimulateArgs {
@@ -65,47 +65,62 @@ export function simulateObservation({
   switch (scenario) {
     case "temperature_spike":
       if (isTarget) {
-        obs.temperature = round(55 + 0.4 * Math.sin(tick / 2), 1);
-        obs.humidity = round(clamp(90 + 1.5 * Math.sin(tick / 3), 80, 96), 1);
-        obs.pressure = round(base.pressure + 6.5 * Math.sin(tick / 2), 1);
+        // Primary SIH scenario: AWS-003 reports 55.0°C
+        obs.temperature = 55.0;
+        obs.humidity = 90.0; // multivariate inconsistency: hot air with anomalous high humidity
+        obs.pressure = round(base.pressure + 6.2, 1);
       }
       break;
+
     case "sensor_drift":
       if (isTarget) {
-        obs.temperature = round(base.temperature + Math.min(9.5, elapsed * 0.45), 1);
-        obs.humidity = round(clamp(base.humidity - Math.min(8, elapsed * 0.3), 40, 95), 1);
+        // Gradual calibration decay
+        const drift = Math.min(9.2, elapsed * 0.45);
+        obs.temperature = round(base.temperature + drift, 1);
+        obs.humidity = round(clamp(base.humidity - drift * 0.4, 40, 95), 1);
       }
       break;
+
     case "frozen_sensor":
       if (isTarget) {
+        // Sensor stuck at exactly one frozen observation
         const frozen = baselineObservation(station, scenarioStartTick);
         obs.temperature = frozen.temperature;
         obs.pressure = frozen.pressure;
         obs.humidity = frozen.humidity;
       }
       break;
+
     case "sudden_drop":
       if (isTarget) {
+        // Sensor collapse / connector short
         obs.temperature = round(base.temperature - 17.4, 1);
-        obs.humidity = round(clamp(base.humidity + 12, 40, 96), 1);
+        obs.humidity = round(clamp(base.humidity + 14, 40, 96), 1);
       }
       break;
+
     case "missing_packet":
-      if (isTarget && elapsed % 3 === 0) {
+      if (isTarget && elapsed % 2 === 1) {
+        // Intermittent radio packet drop
         obs.received = false;
       }
       break;
+
     case "communication_delay":
       if (isTarget) {
-        obs.latencyMs = 1900 + Math.round(500 * Math.abs(Math.sin(tick / 3)));
+        // High link latency buffer
+        obs.latencyMs = 2100 + Math.round(400 * Math.abs(Math.sin(tick / 3)));
         obs.delayed = true;
       }
       break;
+
     case "regional_event":
-      obs.temperature = round(base.temperature - 5.6, 1);
-      obs.pressure = round(base.pressure - 11.2, 1);
-      obs.humidity = round(clamp(base.humidity + 17, 40, 97), 1);
+      // Regional atmospheric cold front affects all stations with consistent physical coupling
+      obs.temperature = round(base.temperature - 5.8, 1);
+      obs.pressure = round(base.pressure - 11.4, 1);
+      obs.humidity = round(clamp(base.humidity + 18, 40, 98), 1);
       break;
+
     default:
       break;
   }
