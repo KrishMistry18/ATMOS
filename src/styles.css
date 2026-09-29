@@ -1,0 +1,172 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * A.T.M.O.S design system — industrial amber/stone mission-control console.
+ * All colors are oklch tokens. Never hardcode colors in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* console-specific */
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-dim: var(--dim);
+  --color-ok: var(--ok);
+  --color-watch: var(--watch);
+  --color-degraded: var(--degraded);
+  --color-critical: var(--critical);
+  --color-event: var(--event);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  --background: oklch(0.147 0.004 49.2);
+  --foreground: oklch(0.923 0.003 48.7);
+  --panel: oklch(0.194 0.006 56);
+  --panel2: oklch(0.216 0.006 56);
+  --line: oklch(0.268 0.006 34.3);
+  --dim: oklch(0.444 0.01 73.6);
+
+  --card: oklch(0.194 0.006 56);
+  --card-foreground: oklch(0.923 0.003 48.7);
+  --popover: oklch(0.216 0.006 56);
+  --popover-foreground: oklch(0.923 0.003 48.7);
+
+  --primary: oklch(0.769 0.165 70.1);
+  --primary-foreground: oklch(0.147 0.004 49.2);
+  --secondary: oklch(0.216 0.006 56);
+  --secondary-foreground: oklch(0.923 0.003 48.7);
+  --muted: oklch(0.216 0.006 56);
+  --muted-foreground: oklch(0.716 0.009 56.3);
+  --accent: oklch(0.769 0.165 70.1);
+  --accent-foreground: oklch(0.147 0.004 49.2);
+  --destructive: oklch(0.577 0.215 27.3);
+  --destructive-foreground: oklch(0.923 0.003 48.7);
+
+  --border: oklch(0.268 0.006 34.3);
+  --input: oklch(0.268 0.006 34.3);
+  --ring: oklch(0.769 0.165 70.1);
+
+  --ok: oklch(0.768 0.204 130.8);
+  --watch: oklch(0.769 0.165 70.1);
+  --degraded: oklch(0.646 0.194 41.1);
+  --critical: oklch(0.577 0.215 27.3);
+  --event: oklch(0.754 0.139 232.7);
+
+  --chart-1: oklch(0.769 0.165 70.1);
+  --chart-2: oklch(0.754 0.139 232.7);
+  --chart-3: oklch(0.768 0.204 130.8);
+  --chart-4: oklch(0.646 0.194 41.1);
+  --chart-5: oklch(0.577 0.215 27.3);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility console-panel {
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in oklab, var(--line) 70%, transparent);
+  background-color: color-mix(in oklab, var(--panel) 75%, transparent);
+}
+
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+@keyframes atmos-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes atmos-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes atmos-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@utility pulse-dot {
+  animation: atmos-pulse 2.2s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}
+
+@utility rise-in {
+  animation: atmos-rise 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@utility sweep-bar {
+  animation: atmos-sweep 4s linear infinite;
+}
