@@ -19,18 +19,18 @@ export function ConsensusPanel({ stationId }: { stationId: string }) {
   return (
     <Panel
       title="Spatio-Temporal Weather Consensus"
-      meta={`TARGET: ${stationId} (${targetStation?.name}) · 3 NEAREST NEIGHBORS`}
+      meta={`Target Node: ${stationId} (${targetStation?.name}) • 3 Nearest Regional Neighbors`}
       action={
-        <span className="font-mono text-[10px] text-dim">RADIUS ~18 KM</span>
+        <span className="text-[11px] font-medium text-muted-foreground">Cluster Radius: ~18 km</span>
       }
     >
       {/* 3 Summary Cards: Regional Consensus, Target Station, Spatial Disagreement */}
-      <div className="grid grid-cols-3 gap-2.5 mb-4">
-        <div className="rounded-lg border border-line/60 bg-panel2/50 p-3">
-          <div className="label-mono text-[9px]">Regional Consensus</div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
+        <div className="rounded-xl border border-border bg-card p-3.5 shadow-xs">
+          <div className="text-[11px] font-medium text-muted-foreground">Regional Consensus</div>
           <div
             className={cn(
-              "mt-1 font-mono text-[14px] font-bold flex items-center gap-1.5",
+              "mt-1.5 text-[15px] font-bold flex items-center gap-1.5",
               regionalConsensus === "EVENT" ? "text-event" : "text-ok",
             )}
           >
@@ -41,21 +41,21 @@ export function ConsensusPanel({ stationId }: { stationId: string }) {
             )}
             {regionalConsensus}
           </div>
-          <div className="mt-1 font-mono text-[9px] text-dim">SURROUNDING GRID</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Cluster Behavior</div>
         </div>
 
         <div
           className={cn(
-            "rounded-lg border p-3",
+            "rounded-xl border p-3.5 shadow-xs",
             isAnomalous
-              ? "border-critical/40 bg-critical/10"
-              : "border-line/60 bg-panel2/50",
+              ? "border-critical/40 bg-critical/5 text-critical"
+              : "border-border bg-card",
           )}
         >
-          <div className="label-mono text-[9px]">Target Station</div>
+          <div className="text-[11px] font-medium text-muted-foreground">Target Station</div>
           <div
             className={cn(
-              "mt-1 font-mono text-[14px] font-bold flex items-center gap-1.5",
+              "mt-1.5 text-[15px] font-bold flex items-center gap-1.5",
               isAnomalous ? "text-critical" : "text-ok",
             )}
           >
@@ -66,14 +66,14 @@ export function ConsensusPanel({ stationId }: { stationId: string }) {
             )}
             {isAnomalous ? "ANOMALOUS" : "NORMAL"}
           </div>
-          <div className="mt-1 font-mono text-[9px] text-dim">{stationId} STATE</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">{stationId} Status</div>
         </div>
 
-        <div className="rounded-lg border border-line/60 bg-panel2/50 p-3">
-          <div className="label-mono text-[9px]">Spatial Disagreement</div>
+        <div className="rounded-xl border border-border bg-card p-3.5 shadow-xs">
+          <div className="text-[11px] font-medium text-muted-foreground">Spatial Disagreement</div>
           <div
             className={cn(
-              "mt-1 font-mono text-[14px] font-bold",
+              "mt-1.5 text-[15px] font-bold",
               spatialDisagreement === "HIGH"
                 ? "text-critical"
                 : spatialDisagreement === "MODERATE"
@@ -83,7 +83,7 @@ export function ConsensusPanel({ stationId }: { stationId: string }) {
           >
             {spatialDisagreement}
           </div>
-          <div className="mt-1 font-mono text-[9px] text-dim">NEIGHBOR VARIANCE</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Neighbor Divergence</div>
         </div>
       </div>
 
@@ -100,7 +100,9 @@ export function ConsensusPanel({ stationId }: { stationId: string }) {
           isTarget
         />
 
-        <div className="label-mono pt-1 text-[9px] text-dim">Cross-Referenced Nearest Nodes:</div>
+        <div className="pt-2 text-[11px] font-medium text-muted-foreground">
+          Cross-Referenced Nearest Nodes:
+        </div>
 
         {neighbors.map((id) => {
           const st = STATION_MAP.get(id);
@@ -123,24 +125,24 @@ export function ConsensusPanel({ stationId }: { stationId: string }) {
       </div>
 
       {/* Narrative Synthesis */}
-      <div className="mt-3.5 rounded-lg border border-line/60 bg-background/50 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+      <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3.5 text-[12px] leading-relaxed text-muted-foreground">
         {regionalConsensus === "EVENT" ? (
-          <span className="text-event">
+          <span className="text-event font-medium">
             <strong>SYNTHESIS:</strong> All stations across the cluster have shifted in tandem
             (-5.8°C temp / -11.4 hPa pressure). This is classified as a genuine regional weather event;
             no sensor fault ticket is generated.
           </span>
         ) : isAnomalous ? (
           <span>
-            <strong className="text-critical">SPATIAL CONFLICT DETECTED: </strong>
+            <strong className="text-critical font-semibold">Spatial Conflict Detected: </strong>
             Station {stationId} reports an extreme reading ({targetObs?.temperature.toFixed(1)}°C)
-            which departs from nearby stations (mean {neighbors.map((n) => `${n}: ${latest[n]?.temperature.toFixed(1)}°C`).join(", ")})
-            by +{Math.abs(assessment.difference).toFixed(1)}°C. High spatial disagreement proves this is an
-            isolated sensor defect, not regional weather.
+            which sharply departs from neighboring stations (mean {neighbors.map((n) => `${n}: ${latest[n]?.temperature.toFixed(1)}°C`).join(", ")})
+            by +{Math.abs(assessment.difference).toFixed(1)}°C. High spatial disagreement confirms this as an
+            isolated sensor defect rather than a regional meteorological front.
           </span>
         ) : (
-          <span className="text-ok">
-            <strong>SPATIAL HARMONY:</strong> Target station and all 3 neighboring nodes agree within
+          <span className="text-ok font-medium">
+            <strong>Spatial Consensus Nominal:</strong> Target station and all 3 neighboring nodes agree within
             acceptable spatial dispersion limits (variance &lt; 1.2°C).
           </span>
         )}
@@ -174,33 +176,33 @@ function StationRow({
   return (
     <div
       className={cn(
-        "flex flex-wrap sm:flex-nowrap items-center gap-3 rounded-lg border p-2.5 transition-all",
+        "flex flex-wrap sm:flex-nowrap items-center gap-3 rounded-lg border p-3 transition-all",
         anomalous
-          ? "border-critical/40 bg-critical/8 shadow-sm shadow-critical/5"
-          : "border-line/60 bg-panel2/40",
+          ? "border-critical/30 bg-critical/5 shadow-xs"
+          : "border-border bg-card",
         highlight && "ring-1 ring-primary/40",
       )}
     >
-      <div className="w-[110px] shrink-0 font-mono">
+      <div className="w-[120px] shrink-0">
         <div className="flex items-center gap-1.5">
-          <span className={cn("text-[12px] font-bold", anomalous ? "text-critical" : "text-foreground")}>
+          <span className={cn("font-mono text-[12px] font-bold", anomalous ? "text-critical" : "text-foreground")}>
             {id}
           </span>
           {isTarget && (
-            <span className="rounded bg-primary/20 px-1 py-0.2 text-[8px] font-bold text-primary">
+            <span className="rounded bg-primary/15 px-1.5 py-0.2 text-[9px] font-semibold text-primary">
               TARGET
             </span>
           )}
         </div>
-        <div className="text-[10px] text-dim truncate">{name}</div>
+        <div className="text-[11px] text-muted-foreground truncate">{name}</div>
       </div>
 
-      <div className="hidden md:block w-20 shrink-0 font-mono text-[10px] text-dim truncate">
+      <div className="hidden md:block w-24 shrink-0 text-[11px] text-muted-foreground truncate">
         {district}
       </div>
 
       <div className="flex-1 min-w-[120px] flex items-center gap-2">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-background/80 border border-line/40">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
           <div
             className={cn("h-full rounded-full transition-all duration-500", anomalous ? "bg-critical" : "bg-ok")}
             style={{ width: `${pct}%` }}
@@ -208,11 +210,11 @@ function StationRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0 font-mono text-[11px]">
-        <span className={cn("w-14 text-right font-bold", anomalous ? "text-critical" : "text-foreground")}>
+      <div className="flex items-center gap-3 shrink-0 text-[12px]">
+        <span className={cn("w-14 text-right font-mono font-bold", anomalous ? "text-critical" : "text-foreground")}>
           {value.toFixed(1)}°C
         </span>
-        <span className={cn("w-14 text-right text-[10px]", delta > 0 ? "text-watch" : "text-dim")}>
+        <span className={cn("w-12 text-right font-mono text-[11px]", delta > 0 ? "text-watch" : "text-muted-foreground")}>
           {delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)}°
         </span>
         <StatusTag label={anomalous ? "ANOMALOUS" : "NORMAL"} tone={anomalous ? "critical" : "ok"} />

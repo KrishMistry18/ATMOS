@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Activity, Clock, Gauge, Radio, Wifi, WifiOff } from "lucide-react";
+import { Activity, Clock, Gauge, Radio, Wifi, WifiOff, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Panel, StatusTag, stateColor } from "@/components/atmos/primitives";
 import { TelemetryChart } from "@/components/atmos/TelemetryChart";
 import { SimulationControls } from "@/components/atmos/SimulationControls";
@@ -11,13 +11,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/live-monitoring")({
   head: () => ({
     meta: [
-      { title: "Live Monitoring — A.T.M.O.S" },
+      { title: "Live Monitoring — A.T.M.O.S Telemetry Stream" },
       {
         name: "description",
         content:
           "Streaming observations from every Automatic Weather Station with per-station telemetry and packet health.",
       },
-      { property: "og:title", content: "Live Monitoring — A.T.M.O.S" },
+      { property: "og:title", content: "Live Monitoring — A.T.M.O.S Telemetry Stream" },
       { property: "og:description", content: "Streaming AWS observations and packet health." },
     ],
   }),
@@ -45,8 +45,10 @@ function LiveMonitoring() {
   return (
     <>
       {/* Station Selector Bar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line/70 bg-panel/60 p-2.5 backdrop-blur">
-        <span className="label-mono px-2 text-[10px] text-dim">SELECT STATION:</span>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-xs">
+        <span className="text-[12px] font-semibold text-muted-foreground uppercase px-1">
+          Select Station:
+        </span>
         <div className="flex flex-wrap gap-1.5 flex-1">
           {STATIONS.map((s) => {
             const h = healthById[s.id]!;
@@ -57,10 +59,10 @@ function LiveMonitoring() {
                 key={s.id}
                 onClick={() => setStationId(s.id)}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border px-3 py-1.5 font-mono text-[11px] font-semibold transition-all",
+                  "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all shadow-xs",
                   active
-                    ? "border-primary/60 bg-primary/15 text-primary ring-1 ring-primary/30"
-                    : "border-line/60 bg-panel2/40 text-muted-foreground hover:border-primary/30 hover:text-foreground",
+                    ? "border-primary bg-primary/10 text-primary font-bold ring-1 ring-primary/30"
+                    : "border-border bg-muted/40 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted",
                 )}
               >
                 <span
@@ -72,11 +74,11 @@ function LiveMonitoring() {
                         ? "bg-ok"
                         : h.state === "WATCH"
                           ? "bg-watch"
-                          : "bg-degraded",
+                          : "bg-critical",
                   )}
                 />
-                <span>{s.id}</span>
-                <span className="text-[10px] text-dim hidden sm:inline">
+                <span className="font-mono">{s.id}</span>
+                <span className="text-[11px] text-muted-foreground hidden sm:inline">
                   {latest[s.id]?.received ? `${latest[s.id]!.temperature.toFixed(1)}°` : "—"}
                 </span>
               </button>
@@ -85,67 +87,71 @@ function LiveMonitoring() {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-5">
         {/* Left Column: Station Telemetry & Incoming Stream */}
-        <div className="col-span-12 space-y-4 xl:col-span-8">
-          {/* Quick Metrics Ribbon for Selected Station */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="col-span-12 space-y-5 xl:col-span-8">
+          {/* Telemetry KPI Cards */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <MetricCard
               label="Temperature"
-              value={currentObs?.received ? `${currentObs.temperature.toFixed(1)}°C` : "NO DATA"}
-              subtext={`Baseline ${currentExpected.temperature.toFixed(1)}°C`}
+              value={currentObs?.received ? `${currentObs.temperature.toFixed(1)}` : "NO DATA"}
+              unit="°C"
+              subtext={`Baseline: ${currentExpected.temperature.toFixed(1)}°C`}
+              trend={currentAssessment.anomalous ? "+23.2°C" : "Nominal"}
               tone={currentAssessment.anomalous ? "critical" : "primary"}
             />
             <MetricCard
-              label="Pressure"
-              value={currentObs?.received ? `${currentObs.pressure.toFixed(1)} hPa` : "—"}
-              subtext="Atmospheric"
-              tone="event"
+              label="Atmospheric Pressure"
+              value={currentObs?.received ? `${currentObs.pressure.toFixed(1)}` : "—"}
+              unit="hPa"
+              subtext="Barometric Pressure"
+              trend="1010.5 hPa avg"
+              tone="secondary"
             />
             <MetricCard
               label="Relative Humidity"
-              value={currentObs?.received ? `${currentObs.humidity.toFixed(0)}%` : "—"}
-              subtext="Hygrometric"
+              value={currentObs?.received ? `${currentObs.humidity.toFixed(0)}` : "—"}
+              unit="%"
+              subtext="Hygrometric Sensor"
+              trend="68% nominal"
               tone="ok"
             />
             <MetricCard
-              label="Packet Transport"
-              value={
-                currentObs?.received
-                  ? `${currentObs.latencyMs} ms`
-                  : "UNREACHABLE"
-              }
-              subtext={currentObs?.delayed ? "LATENCY WARNING" : "LINK STABLE"}
+              label="Packet Health"
+              value={currentObs?.received ? `${currentObs.latencyMs}` : "FAIL"}
+              unit={currentObs?.received ? "ms" : ""}
+              subtext={currentObs?.delayed ? "High Latency" : "Uplink Stable"}
+              trend={`${currentHealth.packetDelivery.toFixed(0)}% delivery`}
               tone={!currentObs?.received ? "critical" : currentObs.delayed ? "watch" : "ok"}
             />
           </div>
 
           <Panel
             title={`Telemetry Stream: ${stationId} (${currentStation.name})`}
-            meta={`DISTRICT: ${currentStation.district} · ELEVATION: ${currentStation.elevation}m · CYCLE TIME: ${formatSimTime(simTime)}`}
+            meta={`District: ${currentStation.district} • Elevation: ${currentStation.elevation}m MSL • Sim Time: ${formatSimTime(simTime)}`}
           >
-            <TelemetryChart stationId={stationId} height={310} />
+            <TelemetryChart stationId={stationId} height={320} />
           </Panel>
 
           <Panel
             title="Real-Time Station Packet Log"
-            meta="LATEST OBSERVATIONS FROM ALL 8 AUTOMATIC WEATHER STATIONS"
+            meta="Incoming telemetry frames across all 8 Automatic Weather Stations"
           >
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left">
+              <table className="w-full min-w-[650px] text-left text-[12px]">
                 <thead>
-                  <tr className="label-mono border-b border-line/70 text-[10px]">
-                    <th className="py-2.5 font-normal">Station Node</th>
-                    <th className="py-2.5 font-normal">Location</th>
-                    <th className="py-2.5 font-normal">Temperature</th>
-                    <th className="py-2.5 font-normal">Pressure</th>
-                    <th className="py-2.5 font-normal">Humidity</th>
-                    <th className="py-2.5 font-normal">Latency</th>
-                    <th className="py-2.5 font-normal">Health</th>
-                    <th className="py-2.5 font-normal">Status</th>
+                  <tr className="border-b border-border/80 text-[11px] font-semibold text-muted-foreground uppercase">
+                    <th className="py-2.5 px-3">Station Node</th>
+                    <th className="py-2.5 px-3">Location</th>
+                    <th className="py-2.5 px-3">Temperature</th>
+                    <th className="py-2.5 px-3">Pressure</th>
+                    <th className="py-2.5 px-3">Humidity</th>
+                    <th className="py-2.5 px-3">Latency</th>
+                    <th className="py-2.5 px-3">Health Score</th>
+                    <th className="py-2.5 px-3">Status</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-[11px]">
+                <tbody className="divide-y divide-border/60">
                   {stream.map(({ station, obs }) => {
                     const health = healthById[station.id]!;
                     const anomalous = assess(station.id).anomalous;
@@ -155,46 +161,41 @@ function LiveMonitoring() {
                         key={station.id}
                         onClick={() => setStationId(station.id)}
                         className={cn(
-                          "cursor-pointer border-b border-line/40 transition-colors hover:bg-foreground/5",
-                          isSelected && "bg-primary/8 font-medium",
+                          "cursor-pointer transition-colors hover:bg-muted/50",
+                          isSelected && "bg-primary/10 font-medium",
+                          anomalous && "bg-critical/5",
                         )}
                       >
-                        <td className="py-2.5 text-foreground flex items-center gap-1.5">
+                        <td className="py-2.5 px-3 font-mono font-bold text-foreground flex items-center gap-2">
                           <span
                             className={cn(
-                              "size-1.5 rounded-full",
-                              anomalous ? "bg-critical" : "bg-ok",
+                              "size-2 rounded-full",
+                              anomalous ? "bg-critical animate-pulse" : "bg-ok",
                             )}
                           />
                           {station.id}
                         </td>
-                        <td className="py-2.5 text-dim">{station.district}</td>
-                        <td
-                          className={cn(
-                            "py-2.5 font-bold",
-                            anomalous ? "text-critical" : "text-muted-foreground",
-                          )}
-                        >
-                          {obs.received ? `${obs.temperature.toFixed(1)}°C` : "MISSING"}
+                        <td className="py-2.5 px-3 text-muted-foreground">{station.district}</td>
+                        <td className="py-2.5 px-3 font-mono font-semibold">
+                          <span className={cn(anomalous ? "text-critical font-bold" : "text-foreground")}>
+                            {obs.received ? `${obs.temperature.toFixed(1)}°C` : "MISSING"}
+                          </span>
                         </td>
-                        <td className="py-2.5 text-muted-foreground">
+                        <td className="py-2.5 px-3 font-mono text-muted-foreground">
                           {obs.received ? `${obs.pressure.toFixed(1)} hPa` : "—"}
                         </td>
-                        <td className="py-2.5 text-muted-foreground">
+                        <td className="py-2.5 px-3 font-mono text-muted-foreground">
                           {obs.received ? `${obs.humidity.toFixed(0)}%` : "—"}
                         </td>
-                        <td
-                          className={cn(
-                            "py-2.5",
-                            obs.delayed ? "text-degraded font-bold" : "text-muted-foreground",
-                          )}
-                        >
-                          {obs.received ? `${obs.latencyMs} ms` : "TIMED OUT"}
+                        <td className="py-2.5 px-3 font-mono">
+                          <span className={cn(obs.delayed ? "text-watch font-bold" : "text-muted-foreground")}>
+                            {obs.received ? `${obs.latencyMs} ms` : "TIMEOUT"}
+                          </span>
                         </td>
-                        <td className={cn("py-2.5 font-bold", stateColor[health.state])}>
-                          {health.score}
+                        <td className="py-2.5 px-3 font-mono font-bold">
+                          <span className={stateColor[health.state]}>{health.score}</span>
                         </td>
-                        <td className="py-2.5">
+                        <td className="py-2.5 px-3">
                           <StatusTag
                             label={anomalous ? "ANOMALOUS" : health.state}
                             tone={
@@ -204,7 +205,7 @@ function LiveMonitoring() {
                                   ? "ok"
                                   : health.state === "WATCH"
                                     ? "watch"
-                                    : "degraded"
+                                    : "critical"
                             }
                           />
                         </td>
@@ -218,24 +219,25 @@ function LiveMonitoring() {
         </div>
 
         {/* Right Column: Communication Telemetry & Simulation Controls */}
-        <div className="col-span-12 space-y-4 xl:col-span-4">
+        <div className="col-span-12 space-y-5 xl:col-span-4">
           <Panel
             title="Communication & Packet Health"
-            meta={`${stationId} · LAST 40 REPORTING CYCLES`}
+            meta={`${stationId} • Rolling 40 Telemetry Cycles`}
           >
-            <dl className="space-y-2.5 font-mono text-[11px]">
+            <div className="space-y-3 text-[12px]">
               <Row
                 label="Packet Delivery Rate"
                 value={`${currentHealth.packetDelivery.toFixed(1)}%`}
+                tone={currentHealth.packetDelivery > 95 ? "text-ok" : "text-watch"}
               />
               <Row label="Mean Backhaul Latency" value={`${currentHealth.latencyMs} ms`} />
               <Row
-                label="Dropped / Missing Packets"
+                label="Missing Telemetry Frames"
                 value={`${missingInWindow}`}
                 tone={missingInWindow > 0 ? "text-critical" : "text-foreground"}
               />
               <Row
-                label="Delayed Packets (>1800ms)"
+                label="Delayed Frames (>1800ms)"
                 value={`${delayedInWindow}`}
                 tone={delayedInWindow > 0 ? "text-watch" : "text-foreground"}
               />
@@ -244,38 +246,38 @@ function LiveMonitoring() {
                 value={currentHealth.communication}
                 tone={currentHealth.communication === "Excellent" ? "text-ok" : "text-watch"}
               />
-            </dl>
+            </div>
 
-            <div className="mt-4">
-              <div className="label-mono mb-1.5 text-[9px] flex items-center justify-between">
-                <span>Packet Reception Timeline (Historical Buffer)</span>
-                <span className="text-ok">40 CYCLES</span>
+            <div className="mt-5 pt-3 border-t border-border">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground mb-2">
+                <span>Packet Ingestion Buffer</span>
+                <span className="text-ok">40 Cycles Buffer</span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 h-7">
                 {stationHistory.slice(-40).map((o, i) => (
                   <span
                     key={i}
-                    title={`Tick #${o.tick}: ${o.received ? `${o.latencyMs}ms` : "MISSING"}`}
+                    title={`Cycle #${o.tick}: ${o.received ? `${o.latencyMs}ms` : "MISSING"}`}
                     className={cn(
-                      "h-7 flex-1 rounded-[2px] transition-all",
+                      "flex-1 rounded-[2px] transition-all",
                       !o.received
                         ? "bg-critical"
                         : o.delayed
-                          ? "bg-degraded"
-                          : "bg-ok/50 hover:bg-ok",
+                          ? "bg-watch"
+                          : "bg-ok/60 hover:bg-ok",
                     )}
                   />
                 ))}
               </div>
-              <div className="mt-2 flex items-center justify-between font-mono text-[9px] text-dim">
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-ok/50" /> NORMAL PACKET
+              <div className="mt-2.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-ok/60" /> Received
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-degraded" /> DELAYED
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-watch" /> Delayed
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-critical" /> LOST
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-critical" /> Lost
                 </span>
               </div>
             </div>
@@ -291,36 +293,48 @@ function LiveMonitoring() {
 function MetricCard({
   label,
   value,
+  unit,
   subtext,
+  trend,
   tone,
 }: {
   label: string;
   value: string;
+  unit: string;
   subtext: string;
-  tone: "primary" | "event" | "ok" | "watch" | "critical";
+  trend: string;
+  tone: "primary" | "secondary" | "ok" | "watch" | "critical";
 }) {
   const toneClasses = {
     primary: "text-primary",
-    event: "text-event",
+    secondary: "text-secondary",
     ok: "text-ok",
     watch: "text-watch",
     critical: "text-critical",
   }[tone];
 
   return (
-    <div className="rounded-lg border border-line/60 bg-panel2/40 p-3">
-      <div className="label-mono text-[9px]">{label}</div>
-      <div className={cn("mt-1 font-mono text-lg font-bold truncate", toneClasses)}>{value}</div>
-      <div className="mt-0.5 font-mono text-[9px] text-dim truncate">{subtext}</div>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+      <div className="text-[11px] font-semibold text-muted-foreground uppercase">{label}</div>
+      <div className="mt-1.5 flex items-baseline gap-1">
+        <span className={cn("text-2xl font-bold font-mono tracking-tight", toneClasses)}>
+          {value}
+        </span>
+        {unit && <span className="text-[13px] font-medium text-muted-foreground">{unit}</span>}
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span className="truncate">{subtext}</span>
+        <span className="font-medium text-foreground">{trend}</span>
+      </div>
     </div>
   );
 }
 
 function Row({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-line/40 pb-2">
-      <dt className="text-dim">{label}</dt>
-      <dd className={cn("text-foreground font-semibold", tone)}>{value}</dd>
+    <div className="flex items-center justify-between border-b border-border/60 pb-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("font-mono font-semibold text-foreground", tone)}>{value}</span>
     </div>
   );
 }

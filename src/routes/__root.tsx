@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SimulationProvider } from "@/services/simulationStore";
+import { ThemeProvider } from "@/services/themeContext";
 import { AppShell } from "@/components/atmos/AppShell";
 
 function NotFoundComponent() {
@@ -83,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "A.T.M.O.S (Adaptive Tracking & Monitoring of Observational Sensors) — intelligent monitoring, anomaly detection and quality control console for Automatic Weather Stations.",
+          "A.T.M.O.S (Adaptive Tracking & Monitoring of Observational Sensors) — intelligent monitoring, anomaly detection and quality control platform for Automatic Weather Stations.",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "A.T.M.O.S" },
@@ -109,8 +110,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var theme = localStorage.getItem('atmos-theme');
+                if (theme === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                } else {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.remove('light');
+                }
+              } catch(e) {}
+            })();`,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
@@ -126,12 +143,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SimulationProvider>
-        <AppShell>
-          {/* Required: nested routes render here. */}
-          <Outlet />
-        </AppShell>
-      </SimulationProvider>
+      <ThemeProvider>
+        <SimulationProvider>
+          <AppShell>
+            {/* Required: nested routes render here. */}
+            <Outlet />
+          </AppShell>
+        </SimulationProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

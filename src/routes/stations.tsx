@@ -8,6 +8,7 @@ import {
   Mountain,
   Radio,
   Wifi,
+  CheckCircle2,
 } from "lucide-react";
 import { Meter, Panel, StatusTag, stateColor } from "@/components/atmos/primitives";
 import { STATIONS, neighborsOf } from "@/data/stations";
@@ -45,9 +46,10 @@ function Stations() {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Station Cards Grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {STATIONS.map((station) => {
-          const obs = latest[station.id]!;
+          const obs = latest[station.id];
           const health = healthById[station.id]!;
           const assessment = assess(station.id);
           const baseline = adaptiveBaselineFor(station.id);
@@ -58,197 +60,187 @@ function Stations() {
               key={station.id}
               onClick={() => setSelectedStationId(station.id)}
               className={cn(
-                "cursor-pointer rounded-xl border p-4 transition-all hover:scale-[1.01] hover:border-primary/50 bg-panel/75 backdrop-blur",
+                "group cursor-pointer rounded-xl border bg-card p-5 transition-all hover:border-primary/50 hover:shadow-md shadow-xs",
                 isAnomalous
-                  ? "border-critical/40 ring-1 ring-critical/20 bg-critical/5 shadow-sm shadow-critical/5"
-                  : "border-line/70 hover:shadow-md",
+                  ? "border-critical/50 bg-critical/5 ring-1 ring-critical/20"
+                  : "border-border",
               )}
             >
+              {/* Card Header: Station ID, Name & Status */}
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-1.5 font-mono text-[14px] font-bold text-foreground">
-                    <Radio className="size-3.5 text-primary" />
-                    <span>{station.id}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[14px] font-bold text-foreground">
+                      {station.id}
+                    </span>
+                    <span className="flex size-2 rounded-full bg-primary" />
                   </div>
-                  <div className="text-[13px] font-semibold text-foreground mt-0.5">
+                  <h3 className="text-[15px] font-bold text-foreground mt-0.5 group-hover:text-primary transition-colors">
                     {station.name}
-                  </div>
-                  <div className="label-mono mt-0.5 text-[9px] text-dim flex items-center gap-1">
-                    <MapPin className="size-2.5" />
-                    {station.district}
+                  </h3>
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                    <MapPin className="size-3 text-muted-foreground" />
+                    <span>{station.district}</span>
                   </div>
                 </div>
+
                 <StatusTag
-                  label={health.state}
+                  label={isAnomalous ? "ANOMALY" : health.state}
                   tone={
-                    health.state === "HEALTHY"
-                      ? "ok"
-                      : health.state === "WATCH"
-                        ? "watch"
-                        : health.state === "DEGRADED"
-                          ? "degraded"
+                    isAnomalous
+                      ? "critical"
+                      : health.state === "HEALTHY"
+                        ? "ok"
+                        : health.state === "WATCH"
+                          ? "watch"
                           : "critical"
                   }
                 />
               </div>
 
-              {/* Real-time Telemetry Metrics */}
-              <div className="mt-3.5 grid grid-cols-3 gap-1.5 font-mono text-[11px]">
-                <MetricBox
-                  label="TEMP"
-                  value={obs?.received ? `${obs.temperature.toFixed(1)}°` : "—"}
-                  tone={isAnomalous ? "text-critical" : "text-primary"}
-                />
-                <MetricBox
-                  label="PRES"
-                  value={obs?.received ? `${obs.pressure.toFixed(0)}` : "—"}
-                  tone="text-event"
-                />
-                <MetricBox
-                  label="HUM"
-                  value={obs?.received ? `${obs.humidity.toFixed(0)}%` : "—"}
-                  tone="text-ok"
-                />
-              </div>
-
-              {/* Station Sensor Health Meter */}
-              <div className="mt-3 border-t border-line/40 pt-2.5">
-                <div className="flex items-center justify-between font-mono text-[10px] mb-1">
-                  <span className="text-dim">HEALTH SCORE</span>
-                  <span className={cn("font-bold", stateColor[health.state])}>{health.score} / 100</span>
+              {/* Primary Telemetry: 3 Columns */}
+              <div className="mt-4 grid grid-cols-3 gap-2 rounded-lg bg-muted/30 p-2.5 text-center">
+                <div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase">Temp</div>
+                  <div className={cn("font-mono text-[13px] font-bold mt-0.5", isAnomalous ? "text-critical" : "text-foreground")}>
+                    {obs?.received ? `${obs.temperature.toFixed(1)}°C` : "—"}
+                  </div>
                 </div>
-                <Meter
-                  value={health.score}
-                  tone={
-                    health.state === "HEALTHY"
-                      ? "bg-ok"
-                      : health.state === "WATCH"
-                        ? "bg-watch"
-                        : health.state === "DEGRADED"
-                          ? "bg-degraded"
-                          : "bg-critical"
-                  }
-                />
+                <div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase">Pressure</div>
+                  <div className="font-mono text-[13px] font-bold text-foreground mt-0.5">
+                    {obs?.received ? `${obs.pressure.toFixed(0)} hPa` : "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase">Humidity</div>
+                  <div className="font-mono text-[13px] font-bold text-foreground mt-0.5">
+                    {obs?.received ? `${obs.humidity.toFixed(0)}%` : "—"}
+                  </div>
+                </div>
               </div>
 
-              {/* Technical Attributes */}
-              <dl className="mt-3 space-y-1 font-mono text-[10px]">
-                <Line label="ELEVATION" value={`${station.elevation} m MSL`} />
-                <Line
-                  label="ADAPTIVE BASELINE"
-                  value={`${baseline.historicalMean.toFixed(1)}°C (±${(
-                    baseline.expectedMax - baseline.historicalMean
-                  ).toFixed(1)}°)`}
-                />
-                <Line
-                  label="COMMS UPLINK"
-                  value={`${health.communication} (${health.packetDelivery.toFixed(0)}%)`}
-                />
-                <Line
-                  label="ACTIVE ANOMALY"
-                  value={isAnomalous ? assessment.type : "NONE"}
-                  tone={isAnomalous ? "text-critical font-bold" : "text-ok"}
-                />
-              </dl>
+              {/* Health Score & Progress Bar */}
+              <div className="mt-4 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground">Health Score</span>
+                  <span className={cn("font-mono font-bold", stateColor[health.state])}>
+                    {health.score} / 100
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      health.state === "HEALTHY"
+                        ? "bg-ok"
+                        : health.state === "WATCH"
+                          ? "bg-watch"
+                          : "bg-critical",
+                    )}
+                    style={{ width: `${health.score}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Station Metadata Details */}
+              <div className="mt-4 space-y-1.5 border-t border-border/70 pt-3 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Elevation</span>
+                  <span className="font-medium text-foreground">{station.elevation} m</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Adaptive Baseline</span>
+                  <span className="font-mono font-medium text-foreground">
+                    {baseline.historicalMean.toFixed(1)}°C
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Communication</span>
+                  <span className="font-medium text-foreground">{health.communication}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Active Anomaly</span>
+                  <span className={cn("font-medium", isAnomalous ? "text-critical font-bold" : "text-ok")}>
+                    {isAnomalous ? assessment.type : "None"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action hint */}
+              <div className="mt-3 flex items-center justify-end text-[11px] font-medium text-primary group-hover:underline">
+                View Diagnostics & Telemetry →
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Station Detailed Modal */}
-      {selectedStation && (
-        <Dialog open={!!selectedStationId} onOpenChange={(open) => !open && setSelectedStationId(null)}>
-          <DialogContent className="max-w-3xl border-line bg-panel p-6">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle className="font-mono text-lg font-bold text-foreground flex items-center gap-2">
-                    <Radio className="size-4 text-primary" />
-                    {selectedStation.id} — {selectedStation.name}
+      {/* Detail Dialog for Selected Station */}
+      <Dialog
+        open={!!selectedStationId}
+        onOpenChange={(open) => !open && setSelectedStationId(null)}
+      >
+        <DialogContent className="max-w-2xl border-border bg-card p-6">
+          {selectedStation && (
+            <div className="space-y-5">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="flex items-center gap-2.5 text-lg font-bold text-foreground">
+                    <Radio className="size-5 text-primary" />
+                    <span>
+                      {selectedStation.id} — {selectedStation.name}
+                    </span>
                   </DialogTitle>
-                  <p className="font-mono text-[11px] text-dim mt-0.5">
-                    {selectedStation.district} · Lat {selectedStation.lat.toFixed(3)}, Lon{" "}
-                    {selectedStation.lon.toFixed(3)} · Elevation {selectedStation.elevation}m
-                  </p>
+                  <StatusTag
+                    label={assess(selectedStation.id).anomalous ? "ANOMALOUS" : healthById[selectedStation.id]!.state}
+                    tone={assess(selectedStation.id).anomalous ? "critical" : "ok"}
+                  />
                 </div>
-                <StatusTag
-                  label={healthById[selectedStation.id]!.state}
-                  tone={
-                    healthById[selectedStation.id]!.state === "HEALTHY"
-                      ? "ok"
-                      : healthById[selectedStation.id]!.state === "WATCH"
-                        ? "watch"
-                        : "critical"
-                  }
-                />
+                <p className="text-[12px] text-muted-foreground">
+                  {selectedStation.district} • Elevation: {selectedStation.elevation}m • Coordinates: {selectedStation.lat.toFixed(3)}°N, {selectedStation.lon.toFixed(3)}°E
+                </p>
+              </DialogHeader>
+
+              {/* Station Detailed Telemetry Chart */}
+              <div>
+                <div className="mb-2 text-[12px] font-semibold text-foreground">
+                  Live Telemetry Analysis
+                </div>
+                <TelemetryChart stationId={selectedStation.id} height={260} />
               </div>
-            </DialogHeader>
 
-            <div className="mt-4 space-y-4">
-              <TelemetryChart stationId={selectedStation.id} height={250} />
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px]">
-                <div className="rounded border border-line/60 bg-panel2/40 p-2.5">
-                  <div className="text-dim text-[10px]">DRIFT INDEX</div>
-                  <div className="text-foreground font-bold mt-1">
-                    {healthById[selectedStation.id]!.drift}
+              {/* Diagnostic Parameters */}
+              <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-muted/20 p-4 text-[12px] sm:grid-cols-4">
+                <div>
+                  <div className="text-muted-foreground">Health Score</div>
+                  <div className="font-mono text-lg font-bold text-foreground mt-0.5">
+                    {healthById[selectedStation.id]!.score} / 100
                   </div>
                 </div>
-                <div className="rounded border border-line/60 bg-panel2/40 p-2.5">
-                  <div className="text-dim text-[10px]">NOISE VARIANCE</div>
-                  <div className="text-foreground font-bold mt-1">
-                    {healthById[selectedStation.id]!.noise}
+                <div>
+                  <div className="text-muted-foreground">Packet Delivery</div>
+                  <div className="font-mono text-lg font-bold text-ok mt-0.5">
+                    {healthById[selectedStation.id]!.packetDelivery.toFixed(1)}%
                   </div>
                 </div>
-                <div className="rounded border border-line/60 bg-panel2/40 p-2.5">
-                  <div className="text-dim text-[10px]">FAULT RATE</div>
-                  <div className="text-foreground font-bold mt-1">
-                    {healthById[selectedStation.id]!.faultRate.toFixed(1)}%
-                  </div>
-                </div>
-                <div className="rounded border border-line/60 bg-panel2/40 p-2.5">
-                  <div className="text-dim text-[10px]">MEAN LATENCY</div>
-                  <div className="text-foreground font-bold mt-1">
+                <div>
+                  <div className="text-muted-foreground">Mean Latency</div>
+                  <div className="font-mono text-lg font-bold text-foreground mt-0.5">
                     {healthById[selectedStation.id]!.latencyMs} ms
                   </div>
                 </div>
-              </div>
-
-              <div className="rounded-lg border border-line/60 bg-panel2/30 p-3">
-                <div className="label-mono text-[10px] text-dim mb-1.5">Nearest Cluster Nodes</div>
-                <div className="flex flex-wrap gap-2 font-mono text-[11px]">
-                  {neighborsOf(selectedStation.id, 4).map((nid) => (
-                    <div
-                      key={nid}
-                      className="rounded border border-line/50 bg-background/50 px-2.5 py-1 text-muted-foreground"
-                    >
-                      {nid}: {latest[nid]?.temperature.toFixed(1)}°C
-                    </div>
-                  ))}
+                <div>
+                  <div className="text-muted-foreground">Sensor Drift</div>
+                  <div className="font-mono text-lg font-bold text-foreground mt-0.5">
+                    {healthById[selectedStation.id]!.drift}
+                  </div>
                 </div>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </>
-  );
-}
-
-function MetricBox({ label, value, tone }: { label: string; value: string; tone: string }) {
-  return (
-    <div className="rounded-md border border-line/60 bg-panel2/50 p-2 text-center">
-      <div className="label-mono text-[9px]">{label}</div>
-      <div className={cn("mt-1 text-[13px] font-bold", tone)}>{value}</div>
-    </div>
-  );
-}
-
-function Line({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="flex items-center justify-between border-b border-line/30 pb-1">
-      <dt className="text-dim">{label}</dt>
-      <dd className={cn("text-muted-foreground", tone)}>{value}</dd>
-    </div>
   );
 }

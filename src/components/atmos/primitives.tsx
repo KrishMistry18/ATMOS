@@ -39,16 +39,16 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className={cn("console-panel rise-in p-4", className)}>
+    <section className={cn("console-panel rise-in p-5 transition-shadow", className)}>
       {(title || action) && (
-        <header className="mb-3 flex items-start justify-between gap-3">
+        <header className="mb-4 flex items-center justify-between gap-3 border-b border-border/60 pb-3">
           <div>
             {title && (
-              <h2 className="text-[13px] font-semibold tracking-tight uppercase text-primary/85">
+              <h2 className="text-[14px] font-semibold tracking-tight text-foreground">
                 {title}
               </h2>
             )}
-            {meta && <div className="label-mono mt-0.5">{meta}</div>}
+            {meta && <div className="mt-0.5 text-[11px] font-normal text-muted-foreground">{meta}</div>}
           </div>
           {action}
         </header>
@@ -59,7 +59,7 @@ export function Panel({
 }
 
 export function Dot({ className }: { className?: string }) {
-  return <span className={cn("size-1.5 rounded-full pulse-dot", className)} />;
+  return <span className={cn("size-2 rounded-full pulse-dot inline-block", className)} />;
 }
 
 export function StatusTag({
@@ -67,20 +67,21 @@ export function StatusTag({
   tone = "neutral",
 }: {
   label: string;
-  tone?: "neutral" | "ok" | "watch" | "degraded" | "critical" | "event";
+  tone?: "neutral" | "ok" | "watch" | "degraded" | "critical" | "event" | "primary";
 }) {
   const tones: Record<string, string> = {
-    neutral: "border-line text-muted-foreground bg-panel2/60",
+    neutral: "border-border text-muted-foreground bg-muted/60",
+    primary: "border-primary/30 text-primary bg-primary/10",
     ok: "border-ok/30 text-ok bg-ok/10",
     watch: "border-watch/30 text-watch bg-watch/10",
     degraded: "border-degraded/30 text-degraded bg-degraded/10",
-    critical: "border-critical/40 text-critical bg-critical/10",
+    critical: "border-critical/30 text-critical bg-critical/10",
     event: "border-event/30 text-event bg-event/10",
   };
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] tracking-wider uppercase",
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-normal",
         tones[tone],
       )}
     >
@@ -93,41 +94,59 @@ export function KpiCard({
   label,
   value,
   note,
+  icon: Icon,
   tone = "neutral",
 }: {
   label: string;
   value: ReactNode;
   note?: string;
-  tone?: "neutral" | "ok" | "watch" | "degraded" | "critical";
+  icon?: any;
+  tone?: "neutral" | "ok" | "watch" | "degraded" | "critical" | "primary";
 }) {
   const valueTone: Record<string, string> = {
     neutral: "text-foreground",
+    primary: "text-primary",
     ok: "text-ok",
     watch: "text-watch",
     degraded: "text-degraded",
     critical: "text-critical",
   };
+
+  const iconBg: Record<string, string> = {
+    neutral: "bg-muted text-muted-foreground",
+    primary: "bg-primary/10 text-primary",
+    ok: "bg-ok/10 text-ok",
+    watch: "bg-watch/10 text-watch",
+    degraded: "bg-degraded/10 text-degraded",
+    critical: "bg-critical/10 text-critical",
+  };
+
   return (
     <div
       className={cn(
-        "rise-in rounded-lg border p-3.5 transition-colors",
-        tone === "critical"
-          ? "border-critical/30 bg-critical/5"
-          : "border-line/70 bg-panel/60 hover:border-primary/30",
+        "rise-in rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/40 shadow-xs",
+        tone === "critical" && "border-critical/30 bg-critical/5",
       )}
     >
-      <div className="label-mono">{label}</div>
-      <div className={cn("mt-2 font-mono text-2xl font-bold tabular-nums", valueTone[tone])}>
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-medium text-muted-foreground">{label}</span>
+        {Icon && (
+          <div className={cn("flex size-7 items-center justify-center rounded-lg", iconBg[tone])}>
+            <Icon className="size-3.5" />
+          </div>
+        )}
+      </div>
+      <div className={cn("mt-2 text-2xl font-bold tracking-tight", valueTone[tone])}>
         {value}
       </div>
-      {note && <div className="mt-1 font-mono text-[10px] text-dim">{note}</div>}
+      {note && <div className="mt-1 text-[11px] text-muted-foreground">{note}</div>}
     </div>
   );
 }
 
 export function Meter({ value, tone = "bg-primary" }: { value: number; tone?: string }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-background/80">
+    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
       <div
         className={cn("h-full rounded-full transition-all duration-500", tone)}
         style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
@@ -138,8 +157,8 @@ export function Meter({ value, tone = "bg-primary" }: { value: number; tone?: st
 
 export function EmptyState({ message }: { message: string }) {
   return (
-    <div className="grid place-items-center rounded-lg border border-dashed border-line/70 bg-panel2/30 py-10 text-center">
-      <p className="font-mono text-[11px] tracking-wider uppercase text-dim">{message}</p>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
+      <p className="text-[13px] font-medium text-muted-foreground">{message}</p>
     </div>
   );
 }

@@ -2,22 +2,23 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * A.T.M.O.S design system — industrial amber/stone mission-control console.
- * All colors are oklch tokens. Never hardcode colors in components.
+ * A.T.M.O.S Enterprise Meteorological Design System
+ * Primary Brand: Professional Blue (#2563EB)
+ * Clean dual-theme palette (Light + Dark)
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1rem;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -39,7 +40,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* console-specific */
+  /* Enterprise Console Specific */
   --color-panel: var(--panel);
   --color-panel2: var(--panel2);
   --color-line: var(--line);
@@ -50,6 +51,7 @@
   --color-critical: var(--critical);
   --color-event: var(--event);
 
+  /* Data Visualization / Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -57,73 +59,148 @@
   --color-chart-5: var(--chart-5);
 }
 
+/* ============================================================
+   LIGHT THEME (Default)
+   ============================================================ */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  --background: oklch(0.147 0.004 49.2);
-  --foreground: oklch(0.923 0.003 48.7);
-  --panel: oklch(0.194 0.006 56);
-  --panel2: oklch(0.216 0.006 56);
-  --line: oklch(0.268 0.006 34.3);
-  --dim: oklch(0.444 0.01 73.6);
+  --background: #F5F7FA;
+  --foreground: #0F172A;
+  --panel: #FFFFFF;
+  --panel2: #F8FAFC;
+  --line: #E2E8F0;
+  --dim: #64748B;
 
-  --card: oklch(0.194 0.006 56);
-  --card-foreground: oklch(0.923 0.003 48.7);
-  --popover: oklch(0.216 0.006 56);
-  --popover-foreground: oklch(0.923 0.003 48.7);
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
 
-  --primary: oklch(0.769 0.165 70.1);
-  --primary-foreground: oklch(0.147 0.004 49.2);
-  --secondary: oklch(0.216 0.006 56);
-  --secondary-foreground: oklch(0.923 0.003 48.7);
-  --muted: oklch(0.216 0.006 56);
-  --muted-foreground: oklch(0.716 0.009 56.3);
-  --accent: oklch(0.769 0.165 70.1);
-  --accent-foreground: oklch(0.147 0.004 49.2);
-  --destructive: oklch(0.577 0.215 27.3);
-  --destructive-foreground: oklch(0.923 0.003 48.7);
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #0891B2;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #EFF6FF;
+  --accent-foreground: #1D4ED8;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
 
-  --border: oklch(0.268 0.006 34.3);
-  --input: oklch(0.268 0.006 34.3);
-  --ring: oklch(0.769 0.165 70.1);
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #2563EB;
 
-  --ok: oklch(0.768 0.204 130.8);
-  --watch: oklch(0.769 0.165 70.1);
-  --degraded: oklch(0.646 0.194 41.1);
-  --critical: oklch(0.577 0.215 27.3);
-  --event: oklch(0.754 0.139 232.7);
+  --ok: #16A34A;
+  --watch: #D97706;
+  --degraded: #EA580C;
+  --critical: #DC2626;
+  --event: #0284C7;
 
-  --chart-1: oklch(0.769 0.165 70.1);
-  --chart-2: oklch(0.754 0.139 232.7);
-  --chart-3: oklch(0.768 0.204 130.8);
-  --chart-4: oklch(0.646 0.194 41.1);
-  --chart-5: oklch(0.577 0.215 27.3);
+  /* Charts: Primary Blue, Secondary Cyan, Green Healthy, Amber Warning, Red Critical */
+  --chart-1: #2563EB;
+  --chart-2: #0891B2;
+  --chart-3: #16A34A;
+  --chart-4: #D97706;
+  --chart-5: #DC2626;
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+.dark {
+  --background: #0B1220;
+  --foreground: #F8FAFC;
+  --panel: #111827;
+  --panel2: #172033;
+  --line: #263247;
+  --dim: #94A3B8;
+
+  --card: #111827;
+  --card-foreground: #F8FAFC;
+  --popover: #111827;
+  --popover-foreground: #F8FAFC;
+
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #06B6D4;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #1E3A8A;
+  --accent-foreground: #BFDBFE;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #263247;
+  --input: #263247;
+  --ring: #2563EB;
+
+  --ok: #16A34A;
+  --watch: #F59E0B;
+  --degraded: #F97316;
+  --critical: #DC2626;
+  --event: #38BDF8;
+
+  /* Charts: Primary Blue, Secondary Cyan, Green Healthy, Amber Warning, Red Critical */
+  --chart-1: #2563EB;
+  --chart-2: #06B6D4;
+  --chart-3: #16A34A;
+  --chart-4: #F59E0B;
+  --chart-5: #DC2626;
 }
 
 @layer base {
   * {
-    border-color: var(--color-line);
+    border-color: var(--line);
   }
 
+  html,
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden; /* App root manages scrolling */
   }
 }
 
+/* Custom Clean Scrollbar for Scrollable Areas */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dim);
+}
+
 @utility console-panel {
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in oklab, var(--line) 70%, transparent);
-  background-color: color-mix(in oklab, var(--panel) 75%, transparent);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  background-color: var(--panel);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
 
 @utility label-mono {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
   color: var(--dim);
 }
 
@@ -135,27 +212,18 @@
   }
   50% {
     opacity: 0.35;
-    transform: scale(0.7);
+    transform: scale(0.75);
   }
 }
 
 @keyframes atmos-rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes atmos-sweep {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(300%);
   }
 }
 
@@ -164,9 +232,5 @@
 }
 
 @utility rise-in {
-  animation: atmos-rise 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-
-@utility sweep-bar {
-  animation: atmos-sweep 4s linear infinite;
+  animation: atmos-rise 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

@@ -2,8 +2,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Compass,
   Cpu,
-  HelpCircle,
+  Layers,
   Radio,
   ShieldAlert,
   Sparkles,
@@ -30,15 +31,25 @@ export function AnomalyDrawer({
     <Sheet open={!!anomaly} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full overflow-y-auto border-line bg-panel p-0 sm:max-w-[560px]"
+        className="w-full overflow-y-auto border-l border-border bg-card p-0 sm:max-w-[580px] shadow-2xl"
       >
         {anomaly && (
           <div className="flex flex-col">
-            <SheetHeader className="sticky top-0 z-20 space-y-1.5 border-b border-line/70 bg-panel/95 px-6 py-4 backdrop-blur">
+            {/* Drawer Header */}
+            <SheetHeader className="sticky top-0 z-20 space-y-2 border-b border-border bg-card/95 px-6 py-4 backdrop-blur">
               <div className="flex items-center justify-between">
-                <SheetTitle className="flex items-center gap-2.5 font-mono text-[16px] font-bold text-foreground">
-                  <AlertTriangle className="size-4 text-critical" />
-                  {anomaly.id}
+                <SheetTitle className="flex items-center gap-2.5 text-[17px] font-bold text-foreground">
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-critical/10 text-critical">
+                    <AlertTriangle className="size-4.5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span>{anomaly.id}</span>
+                      <span className="text-[12px] font-medium text-muted-foreground">
+                        • {anomaly.stationId}
+                      </span>
+                    </div>
+                  </div>
                 </SheetTitle>
                 <div className="flex items-center gap-2">
                   <StatusTag
@@ -54,7 +65,7 @@ export function AnomalyDrawer({
                   {anomaly.status === "OPEN" && (
                     <button
                       onClick={() => acknowledgeAnomaly(anomaly.id)}
-                      className="rounded border border-watch/40 bg-watch/10 px-2 py-0.5 font-mono text-[10px] font-medium text-watch hover:bg-watch/20"
+                      className="rounded-md border border-border bg-muted px-2.5 py-1 text-[11px] font-semibold text-foreground hover:bg-accent transition-colors"
                     >
                       Acknowledge
                     </button>
@@ -62,378 +73,283 @@ export function AnomalyDrawer({
                   {anomaly.status !== "RESOLVED" && (
                     <button
                       onClick={() => resolveAnomaly(anomaly.id)}
-                      className="rounded border border-ok/40 bg-ok/10 px-2 py-0.5 font-mono text-[10px] font-medium text-ok hover:bg-ok/20"
+                      className="rounded-md bg-ok px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-ok/90 transition-colors shadow-xs"
                     >
                       Resolve
                     </button>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3 font-mono text-[11px] text-dim">
-                <span className="text-foreground font-semibold">{anomaly.stationId}</span>
-                <span>·</span>
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <Clock className="size-3.5" />
                 <span>{formatSimDateTime(anomaly.detectedAt)} UTC</span>
-                <span>·</span>
-                <span>Tick #{anomaly.tick}</span>
+                <span>•</span>
+                <span>Cycle Tick #{anomaly.tick}</span>
+                <span>•</span>
+                <span className="font-semibold text-foreground">{anomaly.type}</span>
               </div>
             </SheetHeader>
 
-            <div className="space-y-5 px-6 py-5">
-              {/* Top Key Metrics */}
-              <div className="grid grid-cols-3 gap-2">
-                <StatCard label="Anomaly Type" value={anomaly.type} />
-                <StatCard
-                  label="Severity"
-                  value={`${anomaly.severityScore}%`}
-                  subtext={anomaly.severity.toUpperCase()}
-                  className={severityColor[anomaly.severity]}
-                />
-                <StatCard
-                  label="Confidence"
-                  value={`${anomaly.confidence}%`}
-                  subtext="CONSENSUS MATCH"
-                  className="text-primary"
-                />
+            <div className="space-y-6 px-6 py-6">
+              {/* Primary Metric Highlights: 6-grid */}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                <div className="rounded-xl border border-critical/30 bg-critical/5 p-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">Observed</span>
+                  <div className="font-mono text-xl font-bold text-critical mt-0.5">
+                    {anomaly.observed.toFixed(1)}°C
+                  </div>
+                  <span className="text-[10px] text-critical/80 font-medium">Raw Sensor Reading</span>
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">Expected Baseline</span>
+                  <div className="font-mono text-xl font-bold text-foreground mt-0.5">
+                    {anomaly.expectedTemperature.toFixed(1)}°C
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">Adaptive Model</span>
+                </div>
+
+                <div className="rounded-xl border border-watch/30 bg-watch/5 p-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">Deviation</span>
+                  <div className="font-mono text-xl font-bold text-watch mt-0.5">
+                    {anomaly.difference > 0 ? "+" : ""}{anomaly.difference.toFixed(1)}°C
+                  </div>
+                  <span className="text-[10px] text-watch/80 font-medium">Baseline Departure</span>
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">Severity</span>
+                  <div className={cn("text-xl font-bold mt-0.5", severityColor[anomaly.severity])}>
+                    {anomaly.severityScore}%
+                  </div>
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                    {anomaly.severity}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">Confidence</span>
+                  <div className="text-xl font-bold text-primary mt-0.5">
+                    {anomaly.confidence}%
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">Consensus Match</span>
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">Classification</span>
+                  <div className="text-[13px] font-bold text-foreground mt-1 truncate">
+                    Probable Sensor Anomaly
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">Isolated Defect</span>
+                </div>
               </div>
 
-              {/* Primary Reason & Root Cause */}
-              <Section title="Root Cause Analysis">
-                <div className="rounded-lg border border-line/60 bg-panel2/40 p-3.5">
-                  <div className="flex items-center gap-2 font-mono text-[12px] font-bold text-foreground">
-                    <span className="grid size-5 place-items-center rounded bg-critical/15 text-critical text-[11px]">
-                      !
-                    </span>
-                    Root Cause: {anomaly.causes[0] ?? "Probable sensor anomaly"}
-                  </div>
-                  <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                    {anomaly.reason}
+              {/* OBSERVATION COMPARISON (NEVER OVERWRITTEN) */}
+              <section className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[13px] font-semibold tracking-tight text-foreground uppercase">
+                    Observation Data Integrity (Never Overwritten)
+                  </h3>
+                  <span className="rounded bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    Provenance Locked
+                  </span>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    A.T.M.O.S strictly preserves scientific provenance: the measured value (
+                    <strong className="text-critical font-mono font-bold">{anomaly.observed.toFixed(1)}°C</strong>
+                    ) is permanently archived in the raw telemetry log, while the synthesized consensus estimate (
+                    <strong className="text-ok font-mono font-bold">{anomaly.recovery.estimated.toFixed(1)}°C</strong>
+                    ) is served in parallel to forecast systems.
                   </p>
-
-                  {anomaly.causes.length > 1 && (
-                    <div className="mt-3 border-t border-line/40 pt-2.5">
-                      <div className="label-mono mb-1.5 text-[9px]">Differential Diagnostics</div>
-                      <ul className="space-y-1 font-mono text-[11px] text-dim">
-                        {anomaly.causes.map((cause, i) => (
-                          <li key={cause} className="flex items-center gap-1.5">
-                            <span className="size-1 rounded-full bg-primary/60" />
-                            <span className={i === 0 ? "text-foreground font-medium" : ""}>
-                              {cause}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex items-start gap-2 rounded-md border border-primary/25 bg-primary/8 p-2.5 text-[12px] text-primary">
-                    <Wrench className="size-4 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold">Recommended Action: </span>
-                      {anomaly.recommendation}
-                    </div>
-                  </div>
                 </div>
-              </Section>
+              </section>
 
-              {/* Measured vs Reconstructed Estimate */}
-              <Section title="Observation Comparison (Never Overwritten)">
-                <div className="grid grid-cols-3 gap-2">
-                  <ComparisonCard
-                    label="Measured"
-                    value={`${anomaly.observed.toFixed(1)}°C`}
-                    tag="RAW TELEMETRY"
-                    tone="critical"
-                  />
-                  <ComparisonCard
-                    label="Expected Baseline"
-                    value={`${anomaly.expectedTemperature.toFixed(1)}°C`}
-                    tag="ADAPTIVE BASELINE"
-                    tone="neutral"
-                  />
-                  <ComparisonCard
-                    label="Deviation"
-                    value={`${anomaly.difference > 0 ? "+" : ""}${anomaly.difference.toFixed(1)}°C`}
-                    tag="DELTA"
-                    tone="watch"
-                  />
+              {/* SELF-HEALING / RECONSTRUCTION ESTIMATE */}
+              <section className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[13px] font-semibold tracking-tight text-foreground uppercase">
+                    Self-Healing / Quality Control Reconstruction
+                  </h3>
+                  <span className="text-[11px] font-semibold text-ok">Confidence: {anomaly.recovery.confidence}%</span>
                 </div>
-              </Section>
-
-              {/* Explainable Self-Healing Recovery Estimate */}
-              <Section title="Self-Healing Quality Control Estimate">
-                <div className="rounded-lg border border-ok/30 bg-ok/5 p-3.5">
+                <div className="rounded-xl border border-ok/30 bg-ok/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-mono text-[10px] tracking-wider uppercase text-ok font-bold">
-                        Reconstructed Value
-                      </span>
-                      <div className="font-mono text-2xl font-bold text-ok">
+                      <div className="text-[11px] font-medium text-muted-foreground">Estimated Reconstructed Value</div>
+                      <div className="font-mono text-3xl font-bold text-ok mt-0.5">
                         {anomaly.recovery.estimated.toFixed(1)}°C
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="font-mono text-[10px] text-dim">ESTIMATE CONFIDENCE</span>
-                      <div className="font-mono text-lg font-bold text-foreground">
-                        {anomaly.recovery.confidence}%
+                      <div className="text-[11px] font-medium text-muted-foreground">Observed Raw Value</div>
+                      <div className="font-mono text-xl font-bold text-critical mt-0.5 line-through decoration-critical/60">
+                        {anomaly.observed.toFixed(1)}°C
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-2.5">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                      <span>Spatial Reconstruction Confidence</span>
+                      <span className="font-semibold text-foreground">{anomaly.recovery.confidence}%</span>
+                    </div>
                     <Meter value={anomaly.recovery.confidence} tone="bg-ok" />
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between border-t border-ok/20 pt-2 font-mono text-[11px] text-dim">
-                    <span>SYNTHESIS ALGORITHM</span>
-                    <span className="text-foreground font-medium">{anomaly.recovery.method}</span>
+                  <div className="flex items-center justify-between border-t border-ok/20 pt-2 text-[11px]">
+                    <span className="text-muted-foreground">Reconstruction Method:</span>
+                    <span className="font-semibold text-foreground">{anomaly.recovery.method}</span>
                   </div>
-
-                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                    A.T.M.O.S preserves strict data provenance: raw measured telemetry (55.0°C) is
-                    permanently retained, while the reconstructed consensus estimate (31.8°C) is
-                    published alongside for forecast models.
-                  </p>
                 </div>
-              </Section>
+              </section>
 
-              {/* Evidence Breakdown */}
-              <Section title="Multivariate Detection Evidence">
-                <div className="rounded-lg border border-line/60 bg-panel2/40 p-3.5">
+              {/* MULTIVARIATE EVIDENCE */}
+              <section className="space-y-2.5">
+                <h3 className="text-[13px] font-semibold tracking-tight text-foreground uppercase">
+                  Multivariate Detection Evidence
+                </h3>
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                   <EvidenceBars evidence={anomaly.evidence} />
 
-                  <div className="mt-4 grid grid-cols-2 gap-2 font-mono text-[10px]">
-                    <EvidenceRow
-                      label="Baseline Deviation"
-                      value={`${anomaly.evidence.baseline}%`}
-                      active={anomaly.evidence.baseline > 50}
-                    />
-                    <EvidenceRow
-                      label="Spatial Disagreement"
-                      value={`${anomaly.evidence.spatial}%`}
-                      active={anomaly.evidence.spatial > 50}
-                    />
-                    <EvidenceRow
-                      label="Rate of Change"
-                      value={`${anomaly.evidence.rate}%`}
-                      active={anomaly.evidence.rate > 50}
-                    />
-                    <EvidenceRow
-                      label="Multivariate Physics"
-                      value={`${anomaly.evidence.multivariate}%`}
-                      active={anomaly.evidence.multivariate > 50}
-                    />
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/70 text-[11px]">
+                    <div className="flex items-center justify-between rounded-lg bg-muted/40 p-2">
+                      <span className="text-muted-foreground">Adaptive Baseline:</span>
+                      <span className="font-mono font-bold text-foreground">{anomaly.evidence.baseline}%</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-muted/40 p-2">
+                      <span className="text-muted-foreground">Spatial Disagreement:</span>
+                      <span className="font-mono font-bold text-foreground">{anomaly.evidence.spatial}%</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-muted/40 p-2">
+                      <span className="text-muted-foreground">Rate of Change:</span>
+                      <span className="font-mono font-bold text-foreground">{anomaly.evidence.rate}%</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-muted/40 p-2">
+                      <span className="text-muted-foreground">Multivariate Consistency:</span>
+                      <span className="font-mono font-bold text-foreground">{anomaly.evidence.multivariate}%</span>
+                    </div>
                   </div>
                 </div>
-              </Section>
+              </section>
 
-              {/* Spatial Weather Consensus Cross-Check */}
-              <Section title="Spatial Weather Consensus">
-                <div className="rounded-lg border border-line/60 bg-panel2/40 p-3.5">
-                  <div className="space-y-1.5">
+              {/* SPATIAL CONTEXT */}
+              <section className="space-y-2.5">
+                <h3 className="text-[13px] font-semibold tracking-tight text-foreground uppercase">
+                  Spatial Context & Neighbor Consensus
+                </h3>
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">
+                    <div className="rounded-lg border border-critical/30 bg-critical/5 p-2.5 text-center">
+                      <div className="text-[10px] text-muted-foreground font-medium">Target Station</div>
+                      <div className="text-[12px] font-bold text-critical mt-0.5">ANOMALOUS</div>
+                    </div>
+                    <div className="rounded-lg border border-ok/30 bg-ok/5 p-2.5 text-center">
+                      <div className="text-[10px] text-muted-foreground font-medium">Neighbor Stations</div>
+                      <div className="text-[12px] font-bold text-ok mt-0.5">NORMAL</div>
+                    </div>
+                    <div className="rounded-lg border border-border bg-muted/40 p-2.5 text-center">
+                      <div className="text-[10px] text-muted-foreground font-medium">Regional Consensus</div>
+                      <div className="text-[12px] font-bold text-ok mt-0.5">{anomaly.regionalConsensus}</div>
+                    </div>
+                    <div className="rounded-lg border border-critical/30 bg-critical/5 p-2.5 text-center">
+                      <div className="text-[10px] text-muted-foreground font-medium">Spatial Disagreement</div>
+                      <div className="text-[12px] font-bold text-critical mt-0.5">{anomaly.spatialDisagreement}</div>
+                    </div>
+                  </div>
+
+                  {/* Neighbor stations list */}
+                  <div className="space-y-1.5 pt-1">
                     {anomaly.neighbors.map((n) => (
                       <div
                         key={n.stationId}
-                        className="flex items-center justify-between rounded border border-line/50 bg-background/50 px-2.5 py-1.5 font-mono text-[11px]"
+                        className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 text-[12px]"
                       >
-                        <span className="text-muted-foreground">{n.stationId}</span>
-                        <span className="font-semibold text-foreground">
+                        <span className="font-medium text-foreground">{n.stationId}</span>
+                        <span className="font-mono text-foreground font-semibold">
                           {n.temperature.toFixed(1)}°C
                         </span>
                         <StatusTag
-                          label={n.normal ? "NORMAL" : "ANOM"}
+                          label={n.normal ? "NORMAL" : "ANOMALOUS"}
                           tone={n.normal ? "ok" : "critical"}
                         />
                       </div>
                     ))}
                   </div>
+                </div>
+              </section>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-line/40 pt-2.5 font-mono text-[11px]">
-                    <div>
-                      <div className="text-dim text-[10px]">REGIONAL CONSENSUS</div>
-                      <div
-                        className={cn(
-                          "font-bold mt-0.5",
-                          anomaly.regionalConsensus === "EVENT" ? "text-event" : "text-ok",
-                        )}
-                      >
-                        {anomaly.regionalConsensus}
-                      </div>
+              {/* ROOT CAUSE ANALYSIS & ACTIONS */}
+              <section className="space-y-2.5">
+                <h3 className="text-[13px] font-semibold tracking-tight text-foreground uppercase">
+                  Root Cause & Operational Recommendation
+                </h3>
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-critical/15 text-critical text-[11px] font-bold">
+                      !
                     </div>
                     <div>
-                      <div className="text-dim text-[10px]">SPATIAL DISAGREEMENT</div>
-                      <div
-                        className={cn(
-                          "font-bold mt-0.5",
-                          anomaly.spatialDisagreement === "HIGH"
-                            ? "text-critical"
-                            : anomaly.spatialDisagreement === "MODERATE"
-                              ? "text-watch"
-                              : "text-ok",
-                        )}
-                      >
-                        {anomaly.spatialDisagreement}
+                      <div className="text-[13px] font-bold text-foreground">
+                        {anomaly.causes[0] ?? "Probable sensor anomaly"}
                       </div>
+                      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                        {anomaly.reason}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-[12px] text-primary">
+                    <Wrench className="size-4 shrink-0 mt-0.5 text-primary" />
+                    <div>
+                      <span className="font-semibold text-foreground">Recommended Action: </span>
+                      <span className="text-muted-foreground">{anomaly.recommendation}</span>
                     </div>
                   </div>
                 </div>
-              </Section>
+              </section>
 
-              {/* Sensor Health Impact */}
-              {anomaly.healthImpact && (
-                <Section title="Predictive Sensor Health Impact">
-                  <div className="rounded-lg border border-line/60 bg-panel2/40 p-3.5">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="rounded border border-line/50 bg-background/40 p-2 text-center">
-                        <div className="label-mono text-[9px]">Prior Score</div>
-                        <div className="font-mono text-sm font-bold text-foreground">
-                          {anomaly.healthImpact.priorScore}
-                        </div>
-                      </div>
-                      <div className="rounded border border-critical/30 bg-critical/5 p-2 text-center">
-                        <div className="label-mono text-[9px] text-critical">Penalty Drop</div>
-                        <div className="font-mono text-sm font-bold text-critical">
-                          -{anomaly.healthImpact.scoreDrop} pts
-                        </div>
-                      </div>
-                      <div className="rounded border border-line/50 bg-background/40 p-2 text-center">
-                        <div className="label-mono text-[9px]">Projected Score</div>
-                        <div
-                          className={cn(
-                            "font-mono text-sm font-bold",
-                            stateColor[anomaly.healthImpact.riskCategory],
-                          )}
-                        >
-                          {anomaly.healthImpact.projectedScore} (
-                          {anomaly.healthImpact.riskCategory})
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-2.5 flex items-center justify-between font-mono text-[10px] text-dim">
-                      <span>Noise Variance Multiplier:</span>
-                      <span className="text-watch font-semibold">
-                        {anomaly.healthImpact.varianceMultiplier}x
-                      </span>
-                    </div>
-                  </div>
-                </Section>
-              )}
-
-              {/* Audit & Evidence Timeline */}
+              {/* AUDIT TRAIL */}
               {anomaly.auditTrail && anomaly.auditTrail.length > 0 && (
-                <Section title="Verification & Audit Trail">
-                  <div className="rounded-lg border border-line/60 bg-panel2/40 p-3.5">
-                    <div className="space-y-3 font-mono text-[11px]">
-                      {anomaly.auditTrail.map((step, idx) => (
-                        <div key={step.id} className="relative flex items-start gap-2.5">
-                          <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-background border border-line text-[9px] font-bold">
-                            {idx + 1}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-foreground">{step.label}</span>
-                              <span
-                                className={cn(
-                                  "rounded px-1.5 py-0.2 text-[9px] font-semibold",
-                                  step.status === "pass"
-                                    ? "bg-ok/15 text-ok"
-                                    : step.status === "warn"
-                                      ? "bg-watch/15 text-watch"
-                                      : "bg-critical/15 text-critical",
-                                )}
-                              >
-                                {step.result}
-                              </span>
-                            </div>
-                            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground font-sans">
-                              {step.detail}
-                            </p>
-                          </div>
+                <section className="space-y-2.5">
+                  <h3 className="text-[13px] font-semibold tracking-tight text-foreground uppercase">
+                    Verification & Audit Trail
+                  </h3>
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                    {anomaly.auditTrail.map((step, idx) => (
+                      <div key={step.id} className="flex items-start gap-3">
+                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted border border-border text-[10px] font-bold text-muted-foreground">
+                          {idx + 1}
                         </div>
-                      ))}
-                    </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-semibold text-foreground">{step.label}</span>
+                            <span
+                              className={cn(
+                                "rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                                step.status === "pass"
+                                  ? "bg-ok/15 text-ok"
+                                  : step.status === "warn"
+                                    ? "bg-watch/15 text-watch"
+                                    : "bg-critical/15 text-critical",
+                              )}
+                            >
+                              {step.result}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground leading-snug">
+                            {step.detail}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </Section>
+                </section>
               )}
             </div>
           </div>
         )}
       </SheetContent>
     </Sheet>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h3 className="label-mono mb-2 text-[10px] tracking-wider text-dim">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  subtext,
-  className,
-}: {
-  label: string;
-  value: string;
-  subtext?: string;
-  className?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-line/60 bg-panel2/40 p-2.5">
-      <div className="label-mono text-[9px]">{label}</div>
-      <div className={cn("mt-1 font-mono text-base font-bold", className)}>{value}</div>
-      {subtext && <div className="font-mono text-[9px] text-dim mt-0.5">{subtext}</div>}
-    </div>
-  );
-}
-
-function ComparisonCard({
-  label,
-  value,
-  tag,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tag: string;
-  tone: "critical" | "neutral" | "watch";
-}) {
-  const toneClasses = {
-    critical: "text-critical",
-    neutral: "text-foreground",
-    watch: "text-watch",
-  }[tone];
-  return (
-    <div className="rounded-lg border border-line/60 bg-background/50 p-2.5 text-center">
-      <div className="label-mono text-[9px]">{label}</div>
-      <div className={cn("mt-1 font-mono text-lg font-bold", toneClasses)}>{value}</div>
-      <div className="mt-1">
-        <StatusTag label={tag} tone={tone === "neutral" ? "neutral" : tone} />
-      </div>
-    </div>
-  );
-}
-
-function EvidenceRow({
-  label,
-  value,
-  active,
-}: {
-  label: string;
-  value: string;
-  active: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between rounded bg-background/40 px-2 py-1">
-      <span className="text-dim flex items-center gap-1">
-        {active ? <span className="text-ok">✓</span> : <span className="text-dim">·</span>}
-        {label}
-      </span>
-      <span className={cn("font-bold", active ? "text-primary" : "text-dim")}>{value}</span>
-    </div>
   );
 }

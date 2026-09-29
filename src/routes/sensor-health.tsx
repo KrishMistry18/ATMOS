@@ -13,17 +13,18 @@ import { Meter, Panel, StatusTag, stateColor } from "@/components/atmos/primitiv
 import { useSimulation } from "@/services/simulationStore";
 import { cn } from "@/lib/utils";
 import { ShieldAlert, ShieldCheck, Wifi, AlertTriangle } from "lucide-react";
+import { STATION_MAP } from "@/data/stations";
 
 export const Route = createFileRoute("/sensor-health")({
   head: () => ({
     meta: [
-      { title: "Sensor Health — A.T.M.O.S Predictive Tracking" },
+      { title: "Sensor Health — A.T.M.O.S Fleet Reliability" },
       {
         name: "description",
         content:
           "Predictive sensor health for every AWS node: health score, drift, noise, fault rate and communication quality.",
       },
-      { property: "og:title", content: "Sensor Health — A.T.M.O.S Predictive Tracking" },
+      { property: "og:title", content: "Sensor Health — A.T.M.O.S Fleet Reliability" },
       {
         property: "og:description",
         content: "Predictive sensor health, drift index and degradation matrix across the AWS network.",
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/sensor-health")({
 });
 
 function SensorHealth() {
-  const { health, tick } = useSimulation();
+  const { health, anomalies } = useSimulation();
 
   const chartData = health.map((h) => ({
     station: h.stationId,
@@ -57,231 +58,188 @@ function SensorHealth() {
   };
 
   const avgHealth = Math.round(health.reduce((a, b) => a + b.score, 0) / health.length);
-  const avgComms = (
-    health.reduce((a, b) => a + b.packetDelivery, 0) / health.length
-  ).toFixed(1);
-  const degradedCount = health.filter((h) => h.state !== "HEALTHY").length;
+  const healthyCount = health.filter((h) => h.state === "HEALTHY").length;
+  const watchCount = health.filter((h) => h.state === "WATCH").length;
+  const degradedCount = health.filter((h) => h.state === "DEGRADED").length;
+  const criticalCount = health.filter((h) => h.state === "CRITICAL").length;
 
   return (
     <>
-      {/* Top Health Overview KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">NETWORK HEALTH INDEX</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-ok">{avgHealth} / 100</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Mean health score</div>
+      {/* Fleet Health Summary KPIs */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Overall Health</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-ok">{avgHealth} / 100</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Mean fleet index</div>
         </div>
 
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">DEGRADATION ALERTS</div>
-          <div
-            className={cn(
-              "mt-1 font-mono text-2xl font-bold",
-              degradedCount > 0 ? "text-critical" : "text-ok",
-            )}
-          >
-            {degradedCount} NODES
-          </div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Watch / Degraded / Critical</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Healthy</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-ok">{healthyCount} Nodes</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Nominal baseline</div>
         </div>
 
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">PACKET DELIVERY</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-primary">{avgComms}%</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Across 8 telemetry uplinks</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Watch</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-watch">{watchCount} Nodes</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Slight variance</div>
         </div>
 
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">PREDICTIVE SENSOR LIFETIME</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-foreground">98.4%</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">MTBF availability estimate</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Degraded</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-degraded">{degradedCount} Nodes</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Calibration advised</div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Critical</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-critical">{criticalCount} Nodes</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Immediate action</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-4">
-        {/* Health Score Distribution Chart */}
-        <Panel
-          className="col-span-12 xl:col-span-8"
-          title="Sensor Node Health Scores"
-          meta={`CYCLE #${tick} · 0–100 COMPOSITE SCORING (ANOMALY FREQUENCY + DRIFT + NOISE + COMMS)`}
-        >
-          <div className="h-[260px] rounded-lg border border-line/60 bg-background/80 p-2.5">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="station"
-                  tick={{ fontSize: 10, fill: "var(--dim)", fontFamily: "var(--font-mono)" }}
-                  tickLine={false}
-                  axisLine={{ stroke: "var(--line)" }}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  tick={{ fontSize: 10, fill: "var(--dim)", fontFamily: "var(--font-mono)" }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  cursor={{ fill: "var(--panel2)" }}
-                  contentStyle={{
-                    background: "var(--panel2)",
-                    border: "1px solid var(--line)",
-                    borderRadius: 8,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 11,
-                  }}
-                />
-                <Bar dataKey="score" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getColor(entry.state)} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-4 font-mono text-[10px] text-dim px-1">
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-ok" /> HEALTHY (88–100)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-watch" /> WATCH (74–87)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-degraded" /> DEGRADED (55–73)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-critical" /> CRITICAL (&lt;55)
-            </span>
-          </div>
-        </Panel>
-
-        {/* Network Communication Aggregation */}
-        <Panel
-          className="col-span-12 xl:col-span-4"
-          title="Telemetry Link Stability"
-          meta="COMMUNICATION QUALITY PER NODE"
-        >
-          <dl className="space-y-2.5 font-mono text-[11px]">
-            <Row label="Average Packet Delivery" value={`${avgComms}%`} />
-            <Row
-              label="Mean Network Latency"
-              value={`${Math.round(
-                health.reduce((a, h) => a + h.latencyMs, 0) / health.length,
-              )} ms`}
-            />
-            <Row
-              label="Cumulative Missing Packets"
-              value={`${health.reduce((a, h) => a + h.missingPackets, 0)}`}
-            />
-            <Row
-              label="Cumulative Delayed Packets"
-              value={`${health.reduce((a, h) => a + h.delayedPackets, 0)}`}
-            />
-          </dl>
-
-          <div className="mt-4 space-y-2 border-t border-line/40 pt-3">
-            {health.map((h) => (
-              <div key={h.stationId} className="flex items-center gap-2 font-mono text-[10px]">
-                <span className="w-16 text-dim">{h.stationId}</span>
-                <Meter
-                  value={h.packetDelivery}
-                  tone={
-                    h.packetDelivery > 97
-                      ? "bg-ok"
-                      : h.packetDelivery > 90
-                        ? "bg-watch"
-                        : "bg-critical"
-                  }
-                />
-                <span className="w-12 text-right text-muted-foreground font-semibold">
-                  {h.packetDelivery.toFixed(0)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </div>
-
-      {/* Degradation Matrix */}
+      {/* Fleet Health Distribution Chart */}
       <Panel
-        title="Predictive Degradation Matrix"
-        meta="MONITORING SENSOR DRIFT, NOISE VARIANCE, HARDWARE FAULT RATE & UPLINK QUALITY"
+        title="Fleet Health Score Distribution"
+        meta="Automated composite health indices (0–100) per observational station"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left">
-            <thead>
-              <tr className="label-mono border-b border-line/70 text-[10px]">
-                <th className="py-2.5 font-normal">Station Node</th>
-                <th className="py-2.5 font-normal">Health Score</th>
-                <th className="py-2.5 font-normal">Operational State</th>
-                <th className="py-2.5 font-normal">Drift Index</th>
-                <th className="py-2.5 font-normal">Noise Variance</th>
-                <th className="py-2.5 font-normal">Fault Rate</th>
-                <th className="py-2.5 font-normal">Communication</th>
-                <th className="py-2.5 font-normal">Telemetry Heartbeat</th>
-              </tr>
-            </thead>
-            <tbody className="font-mono text-[11px]">
-              {health.map((h) => (
-                <tr
-                  key={h.stationId}
-                  className="border-b border-line/40 hover:bg-foreground/5 transition-colors"
-                >
-                  <td className="py-3 text-foreground font-bold">{h.stationId}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className={cn("w-7 font-bold", stateColor[h.state])}>{h.score}</span>
-                      <div className="w-28">
-                        <Meter
-                          value={h.score}
-                          tone={
-                            h.state === "HEALTHY"
-                              ? "bg-ok"
-                              : h.state === "WATCH"
-                                ? "bg-watch"
-                                : h.state === "DEGRADED"
-                                  ? "bg-degraded"
-                                  : "bg-critical"
-                          }
-                        />
+        <div className="h-[220px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.6} />
+              <XAxis
+                dataKey="station"
+                tick={{ fontSize: 10, fill: "var(--dim)" }}
+                axisLine={{ stroke: "var(--line)" }}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fontSize: 10, fill: "var(--dim)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "var(--panel)",
+                  borderColor: "var(--line)",
+                  borderRadius: "0.75rem",
+                  fontSize: "12px",
+                  color: "var(--foreground)",
+                }}
+              />
+              <Bar dataKey="score" radius={[6, 6, 0, 0]}>
+                {chartData.map((entry) => (
+                  <Cell key={entry.station} fill={getColor(entry.state)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Panel>
+
+      {/* Station Health Fleet List */}
+      <Panel
+        title="Fleet Station Health & Diagnostics"
+        meta="Detailed degradation breakdown, communication quality and noise indicators"
+      >
+        <div className="space-y-3">
+          {health.map((h) => {
+            const st = STATION_MAP.get(h.stationId);
+            const stationAnomalies = anomalies.filter((a) => a.stationId === h.stationId);
+            const openAnomalies = stationAnomalies.filter((a) => a.status !== "RESOLVED");
+
+            return (
+              <div
+                key={h.stationId}
+                className={cn(
+                  "rounded-xl border bg-card p-4 transition-all shadow-xs",
+                  h.state === "CRITICAL"
+                    ? "border-critical/40 bg-critical/5"
+                    : "border-border",
+                )}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-foreground font-mono font-bold text-[13px]">
+                      {h.stationId.replace("AWS-", "")}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[13px] font-bold text-foreground">
+                          {h.stationId}
+                        </span>
+                        <span className="text-[13px] font-semibold text-foreground">
+                          {st?.name}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {st?.district} • Elevation: {st?.elevation}m MSL
                       </div>
                     </div>
-                  </td>
-                  <td className="py-3">
-                    <StatusTag
-                      label={h.state}
-                      tone={
-                        h.state === "HEALTHY"
-                          ? "ok"
-                          : h.state === "WATCH"
-                            ? "watch"
-                            : h.state === "DEGRADED"
-                              ? "degraded"
-                              : "critical"
-                      }
-                    />
-                  </td>
-                  <td className="py-3 text-muted-foreground">{h.drift}</td>
-                  <td className="py-3 text-muted-foreground">{h.noise}</td>
-                  <td className="py-3 font-semibold text-foreground">{h.faultRate.toFixed(1)}%</td>
-                  <td className="py-3 text-muted-foreground">{h.communication}</td>
-                  <td className="py-3 text-dim">Tick #{h.lastSeenTick}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <StatusTag label={h.state} tone={h.state === "HEALTHY" ? "ok" : h.state === "WATCH" ? "watch" : "critical"} />
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border/60 pt-3.5 sm:grid-cols-4">
+                  {/* Health Score */}
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium">Health Score</div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                      <span className={cn("font-mono text-xl font-bold", stateColor[h.state])}>
+                        {h.score}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">/ 100</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn("h-full rounded-full", getColor(h.state))}
+                        style={{ width: `${h.score}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Signal Quality */}
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium">Signal Quality</div>
+                    <div className="mt-1 font-mono text-[13px] font-bold text-foreground">
+                      {h.packetDelivery > 95 ? "High (98 dBm)" : "Degraded (82 dBm)"}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Carrier: {h.communication}
+                    </div>
+                  </div>
+
+                  {/* Communication Reliability */}
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium">Communication</div>
+                    <div className="mt-1 font-mono text-[13px] font-bold text-ok">
+                      {h.packetDelivery.toFixed(1)}% Delivery
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Latency: {h.latencyMs} ms
+                    </div>
+                  </div>
+
+                  {/* Recent Anomalies */}
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium">Recent Anomalies</div>
+                    <div className={cn("mt-1 font-mono text-[13px] font-bold", openAnomalies.length > 0 ? "text-critical" : "text-foreground")}>
+                      {openAnomalies.length > 0 ? `${openAnomalies.length} Active` : "None"}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {stationAnomalies.length} Historical Total
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Panel>
     </>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between border-b border-line/40 pb-2">
-      <dt className="text-dim">{label}</dt>
-      <dd className="text-foreground font-semibold">{value}</dd>
-    </div>
   );
 }

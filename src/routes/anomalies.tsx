@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertCircle, AlertTriangle, CheckCircle, Filter, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Filter,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { EmptyState, Panel, StatusTag, severityColor } from "@/components/atmos/primitives";
 import { AnomalyDrawer } from "@/components/atmos/AnomalyDrawer";
 import { SimulationControls } from "@/components/atmos/SimulationControls";
@@ -11,13 +19,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/anomalies")({
   head: () => ({
     meta: [
-      { title: "Anomalies — A.T.M.O.S Detection Log" },
+      { title: "Anomalies — A.T.M.O.S Incident Management" },
       {
         name: "description",
         content:
           "Detection log of sensor faults, communication problems and regional weather events with evidence and recommended actions.",
       },
-      { property: "og:title", content: "Anomalies — A.T.M.O.S Detection Log" },
+      { property: "og:title", content: "Anomalies — A.T.M.O.S Incident Management" },
       {
         property: "og:description",
         content: "Detection log with multi-evidence breakdown and self-healing recovery.",
@@ -50,49 +58,57 @@ function Anomalies() {
 
   return (
     <>
-      {/* Top Anomaly Summary KPIs */}
+      {/* Incident Summary Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">OPEN ANOMALIES</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-critical">{openList.length}</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Active investigation required</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Open</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-critical">
+            {openList.length}
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Active incidents</div>
         </div>
 
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">CRITICAL SEVERITY</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-critical">{criticalList.length}</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Severity score &gt; 80%</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Critical</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-critical">
+            {criticalList.length}
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Severity score &gt; 80%</div>
         </div>
 
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">RESOLVED / HEALED</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-ok">{resolvedList.length}</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Recovered within baseline</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">Resolved / Healed</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-ok">
+            {resolvedList.length}
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Within adaptive baseline</div>
         </div>
 
-        <div className="rounded-xl border border-line/70 bg-panel/75 p-3.5 backdrop-blur">
-          <div className="label-mono text-[9px] text-dim">QC RECONSTRUCTION</div>
-          <div className="mt-1 font-mono text-2xl font-bold text-primary">93%</div>
-          <div className="mt-1 font-mono text-[10px] text-dim">Mean spatial confidence</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase">QC Reconstruction</div>
+          <div className="mt-1 text-2xl font-bold font-mono text-primary">
+            93%
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">Mean spatial confidence</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-5">
         <div className="col-span-12 xl:col-span-9">
           <Panel
-            title="Real-Time Anomaly Detection Log"
-            meta={`${openList.length} OPEN · ${anomalies.length} TOTAL EVENTS LOGGED`}
+            title="Incident Management Log"
+            meta={`${openList.length} open • ${anomalies.length} total logged incidents`}
             action={
-              <div className="flex gap-1 rounded border border-line/70 bg-background/50 p-0.5">
+              <div className="flex rounded-lg border border-border bg-muted/40 p-0.5">
                 {FILTERS.map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
                     className={cn(
-                      "rounded-sm px-3 py-1 font-mono text-[10px] font-semibold transition-colors",
+                      "rounded-md px-3 py-1 text-[11px] font-semibold transition-colors",
                       filter === f
-                        ? "bg-primary font-bold text-primary-foreground shadow-sm"
-                        : "text-dim hover:text-foreground",
+                        ? "bg-card text-foreground font-bold shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {f}
@@ -102,42 +118,57 @@ function Anomalies() {
             }
           >
             {rows.length === 0 ? (
-              <EmptyState message="No anomalies match this filter in the current buffer" />
+              <EmptyState message="No incidents match the selected filter." />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[860px] text-left">
+                <table className="w-full min-w-[760px] text-left text-[12px]">
                   <thead>
-                    <tr className="label-mono border-b border-line/70 text-[10px]">
-                      <th className="py-2.5 font-normal">Event ID</th>
-                      <th className="py-2.5 font-normal">Node</th>
-                      <th className="py-2.5 font-normal">Timestamp</th>
-                      <th className="py-2.5 font-normal">Fault Pattern</th>
-                      <th className="py-2.5 font-normal">Observed</th>
-                      <th className="py-2.5 font-normal">Expected</th>
-                      <th className="py-2.5 font-normal">Severity</th>
-                      <th className="py-2.5 font-normal">Confidence</th>
-                      <th className="py-2.5 font-normal">Status</th>
-                      <th className="py-2.5 font-normal">Root Cause</th>
+                    <tr className="border-b border-border/80 text-[11px] font-semibold text-muted-foreground uppercase">
+                      <th className="py-2.5 px-3">Event</th>
+                      <th className="py-2.5 px-3">Station</th>
+                      <th className="py-2.5 px-3">Time</th>
+                      <th className="py-2.5 px-3">Parameter</th>
+                      <th className="py-2.5 px-3">Observed</th>
+                      <th className="py-2.5 px-3">Expected</th>
+                      <th className="py-2.5 px-3">Severity</th>
+                      <th className="py-2.5 px-3">Confidence</th>
+                      <th className="py-2.5 px-3">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="font-mono text-[11px]">
+                  <tbody className="divide-y divide-border/60">
                     {rows.map((a) => (
                       <tr
                         key={a.id}
                         onClick={() => setSelected(a)}
-                        className="cursor-pointer border-b border-line/40 transition-colors hover:bg-foreground/5 hover:border-primary/40"
+                        className="cursor-pointer transition-colors hover:bg-muted/50"
                       >
-                        <td className="py-3 text-primary font-bold">{a.id}</td>
-                        <td className="py-3 text-foreground font-semibold">{a.stationId}</td>
-                        <td className="py-3 text-dim">{formatSimTime(a.detectedAt)}</td>
-                        <td className="py-3 text-foreground">{a.type}</td>
-                        <td className="py-3 font-bold text-critical">{a.observed.toFixed(1)}°C</td>
-                        <td className="py-3 text-dim">{a.expectedTemperature.toFixed(1)}°C</td>
-                        <td className={cn("py-3 font-bold", severityColor[a.severity])}>
-                          {a.severity} ({a.severityScore}%)
+                        <td className="py-2.5 px-3 font-mono font-bold text-foreground">
+                          {a.id}
                         </td>
-                        <td className="py-3 text-primary font-medium">{a.confidence}%</td>
-                        <td className="py-3">
+                        <td className="py-2.5 px-3 font-mono text-foreground font-semibold">
+                          {a.stationId}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-muted-foreground">
+                          {formatSimTime(a.detectedAt)} UTC
+                        </td>
+                        <td className="py-2.5 px-3 text-foreground font-medium">
+                          {a.type}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-critical">
+                          {a.observed.toFixed(1)}°C
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-muted-foreground">
+                          {a.expectedTemperature.toFixed(1)}°C
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className={cn("font-semibold font-mono", severityColor[a.severity])}>
+                            {a.severityScore}% ({a.severity})
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-semibold text-primary">
+                          {a.confidence}%
+                        </td>
+                        <td className="py-2.5 px-3">
                           <StatusTag
                             label={a.status}
                             tone={
@@ -149,9 +180,6 @@ function Anomalies() {
                             }
                           />
                         </td>
-                        <td className="py-3 text-dim max-w-[180px] truncate">
-                          {a.causes[0] ?? "Sensor anomaly"}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -161,7 +189,7 @@ function Anomalies() {
           </Panel>
         </div>
 
-        <div className="col-span-12 xl:col-span-3">
+        <div className="col-span-12 xl:col-span-3 space-y-5">
           <SimulationControls />
         </div>
       </div>

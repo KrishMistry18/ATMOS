@@ -6,6 +6,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Line,
   LineChart,
   Pie,
@@ -22,13 +23,13 @@ import { formatSimTime, useSimulation } from "@/services/simulationStore";
 export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics — A.T.M.O.S Network Telemetry & Trends" },
+      { title: "Analytics — A.T.M.O.S Platform Trends" },
       {
         name: "description",
         content:
           "Aggregate analytics for the AWS network: anomaly frequency, health distribution, parameter trends and latency.",
       },
-      { property: "og:title", content: "Analytics — A.T.M.O.S Network Telemetry & Trends" },
+      { property: "og:title", content: "Analytics — A.T.M.O.S Platform Trends" },
       {
         property: "og:description",
         content: "Aggregate AWS network analytics, parameter trends, and anomaly distributions.",
@@ -38,13 +39,14 @@ export const Route = createFileRoute("/analytics")({
   component: Analytics,
 });
 
-const axis = { fontSize: 10, fill: "var(--dim)", fontFamily: "var(--font-mono)" };
+const axisStyle = { fontSize: 10, fill: "var(--dim)" };
 const tooltipStyle = {
-  background: "var(--panel2)",
-  border: "1px solid var(--line)",
-  borderRadius: 8,
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
+  backgroundColor: "var(--panel)",
+  borderColor: "var(--line)",
+  borderRadius: "0.75rem",
+  fontSize: "12px",
+  color: "var(--foreground)",
+  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
 };
 
 function Analytics() {
@@ -93,188 +95,167 @@ function Analytics() {
   ];
 
   return (
-    <div className="grid grid-cols-12 gap-4">
-      {/* Network Parameter Trends: Mean vs Target Station with Anomaly Divergence */}
+    <div className="grid grid-cols-12 gap-5">
+      {/* Large Telemetry Trend Chart */}
       <Panel
         className="col-span-12 lg:col-span-8"
-        title="Network Temperature & Pressure Trends"
-        meta="NETWORK MEAN (AMBER) VS AWS-003 DIVERGENCE (WHITE) · PRESSURE (BLUE)"
+        title="Network Telemetry Trend & Node Divergence"
+        meta="Cluster Mean vs Target Node (AWS-003) Over Last 40 Cycles"
       >
-        <Chart height={260}>
-          <LineChart data={trends} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-            <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="t"
-              tick={axis}
-              tickLine={false}
-              axisLine={{ stroke: "var(--line)" }}
-              minTickGap={35}
-            />
-            <YAxis yAxisId="left" tick={axis} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={axis}
-              tickLine={false}
-              axisLine={false}
-              domain={["auto", "auto"]}
-            />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Line
-              yAxisId="left"
-              dataKey="temperature"
-              name="Network Mean Temp (°C)"
-              stroke="var(--chart-1)"
-              dot={false}
-              strokeWidth={2}
-              isAnimationActive={false}
-            />
-            <Line
-              yAxisId="left"
-              dataKey="aws3Temp"
-              name="AWS-003 Temp (°C)"
-              stroke="#ffffff"
-              dot={false}
-              strokeWidth={1.5}
-              strokeDasharray="3 3"
-              isAnimationActive={false}
-            />
-            <Line
-              yAxisId="right"
-              dataKey="pressure"
-              name="Mean Pressure (hPa)"
-              stroke="var(--chart-2)"
-              dot={false}
-              strokeWidth={1.5}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </Chart>
-      </Panel>
-
-      {/* Health Distribution Donut */}
-      <Panel
-        className="col-span-12 lg:col-span-4"
-        title="Station Health Distribution"
-        meta="ACTIVE NODES PER CATEGORY"
-      >
-        <Chart height={220}>
-          <PieChart>
-            <Pie
-              data={stateCounts}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={50}
-              outerRadius={80}
-              stroke="var(--panel)"
-              isAnimationActive={false}
-            >
-              {stateCounts.map((entry, i) => (
-                <Cell key={entry.name} fill={stateColors[i]} />
-              ))}
-            </Pie>
-            <Tooltip contentStyle={tooltipStyle} />
-          </PieChart>
-        </Chart>
-        <div className="mt-2 flex flex-wrap justify-center gap-3 font-mono text-[10px] text-dim">
-          {stateCounts.map((s, i) => (
-            <span key={s.name} className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full" style={{ background: stateColors[i] }} />
-              {s.name}: {s.value}
-            </span>
-          ))}
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={trends} margin={{ top: 10, right: 10, bottom: 0, left: -15 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.6} />
+              <XAxis
+                dataKey="t"
+                tick={axisStyle}
+                tickLine={false}
+                axisLine={{ stroke: "var(--line)" }}
+                minTickGap={35}
+              />
+              <YAxis tick={axisStyle} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend
+                wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
+                iconType="circle"
+              />
+              {/* Cluster Mean: Professional Blue */}
+              <Area
+                type="monotone"
+                dataKey="temperature"
+                name="Network Mean Temp (°C)"
+                stroke="var(--color-primary)"
+                fill="var(--color-primary)"
+                fillOpacity={0.12}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+              {/* Target Station: Red when diverging */}
+              <Line
+                type="monotone"
+                dataKey="aws3Temp"
+                name="AWS-003 Observation (°C)"
+                stroke="var(--critical)"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </Panel>
 
-      {/* Anomaly Types Frequency */}
+      {/* Station Health Distribution */}
       <Panel
-        className="col-span-12 lg:col-span-6"
-        title="Anomaly Fingerprint Distribution"
-        meta="CLASSIFICATION HISTOGRAM"
+        className="col-span-12 sm:col-span-6 lg:col-span-4"
+        title="Station Health Distribution"
+        meta="Proportion of AWS Fleet in Each Health Category"
       >
-        <Chart height={220}>
-          <BarChart data={typeCounts} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
-            <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="type" tick={axis} tickLine={false} axisLine={{ stroke: "var(--line)" }} />
-            <YAxis tick={axis} tickLine={false} axisLine={false} allowDecimals={false} />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(value, name, item) => [value, (item.payload as { fullName?: string }).fullName ?? "Count"]}
-              cursor={{ fill: "var(--panel2)" }}
-            />
-            <Bar dataKey="count" fill="var(--chart-4)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-          </BarChart>
-        </Chart>
+        <div className="h-[300px] w-full flex flex-col items-center justify-center">
+          <ResponsiveContainer width="100%" height="80%">
+            <PieChart>
+              <Pie
+                data={stateCounts}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={4}
+              >
+                {stateCounts.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={stateColors[index]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={tooltipStyle} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex flex-wrap justify-center gap-3 text-[11px]">
+            {stateCounts.map((entry, i) => (
+              <span key={entry.name} className="flex items-center gap-1.5 font-medium">
+                <span className="size-2 rounded-full" style={{ backgroundColor: stateColors[i] }} />
+                {entry.name}: {entry.value}
+              </span>
+            ))}
+          </div>
+        </div>
       </Panel>
 
-      {/* Anomaly Lifecycle */}
+      {/* Anomaly Distribution By Type */}
       <Panel
-        className="col-span-12 lg:col-span-6"
-        title="Incident Lifecycle Summary"
-        meta="TOTAL LOGGED VS RESOLVED"
+        className="col-span-12 sm:col-span-6 lg:col-span-4"
+        title="Anomaly Distribution by Type"
+        meta="Incident Frequency Categorized by Fault Fingerprint"
       >
-        <Chart height={220}>
-          <BarChart
-            data={detectedVsResolved}
-            margin={{ top: 8, right: 8, bottom: 0, left: -20 }}
-            layout="vertical"
-          >
-            <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" horizontal={false} />
-            <XAxis type="number" tick={axis} tickLine={false} axisLine={false} allowDecimals={false} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              tick={axis}
-              tickLine={false}
-              axisLine={false}
-              width={75}
-            />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--panel2)" }} />
-            <Bar dataKey="value" fill="var(--chart-1)" radius={[0, 4, 4, 0]} isAnimationActive={false} />
-          </BarChart>
-        </Chart>
+        <div className="h-[240px] w-full">
+          {typeCounts.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-[12px] text-muted-foreground">
+              No anomalies recorded yet
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={typeCounts} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.6} />
+                <XAxis dataKey="type" tick={axisStyle} axisLine={{ stroke: "var(--line)" }} tickLine={false} />
+                <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </Panel>
 
-      {/* Network Communication Latency Trend */}
+      {/* Incident Lifecycle */}
       <Panel
-        className="col-span-12"
-        title="Mean Telemetry Uplink Latency"
-        meta="NETWORK-WIDE HISTORICAL RESPONSE PROFILE (MS)"
+        className="col-span-12 sm:col-span-6 lg:col-span-4"
+        title="Incident Lifecycle"
+        meta="Detected vs Resolved vs Active Incidents"
       >
-        <Chart height={180}>
-          <AreaChart data={trends} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-            <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="t"
-              tick={axis}
-              tickLine={false}
-              axisLine={{ stroke: "var(--line)" }}
-              minTickGap={35}
-            />
-            <YAxis tick={axis} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Area
-              dataKey="latency"
-              name="Latency (ms)"
-              stroke="var(--chart-2)"
-              fill="var(--chart-2)"
-              fillOpacity={0.15}
-              strokeWidth={1.6}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </Chart>
+        <div className="h-[240px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={detectedVsResolved} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.6} />
+              <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: "var(--line)" }} tickLine={false} />
+              <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                <Cell fill="var(--color-primary)" />
+                <Cell fill="var(--ok)" />
+                <Cell fill="var(--critical)" />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Panel>
-    </div>
-  );
-}
 
-function Chart({ children, height = 240 }: { children: React.ReactElement; height?: number }) {
-  return (
-    <div style={{ height }} className="rounded-lg border border-line/60 bg-background/80 p-2.5">
-      <ResponsiveContainer width="100%" height="100%">
-        {children}
-      </ResponsiveContainer>
+      {/* Communication Latency Over Time */}
+      <Panel
+        className="col-span-12 sm:col-span-6 lg:col-span-4"
+        title="Mean Communication Latency"
+        meta="Rolling Backhaul Transmission Latency (ms)"
+      >
+        <div className="h-[240px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trends} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.6} />
+              <XAxis dataKey="t" tick={axisStyle} axisLine={{ stroke: "var(--line)" }} tickLine={false} minTickGap={35} />
+              <YAxis tick={axisStyle} axisLine={false} tickLine={false} domain={[0, "auto"]} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Line
+                type="monotone"
+                dataKey="latency"
+                name="Mean Latency (ms)"
+                stroke="var(--color-secondary)"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Panel>
     </div>
   );
 }

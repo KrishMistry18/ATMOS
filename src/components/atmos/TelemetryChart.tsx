@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import {
   Area,
+  CartesianGrid,
   ComposedChart,
   Line,
-  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -18,16 +18,16 @@ import { STATION_MAP } from "@/data/stations";
 
 type Metric = "temperature" | "pressure" | "humidity" | "all";
 
-const METRICS: { id: Metric; label: string; unit: string; color: string }[] = [
-  { id: "temperature", label: "TEMPERATURE (°C)", unit: "°C", color: "var(--chart-1)" },
-  { id: "pressure", label: "PRESSURE (hPa)", unit: "hPa", color: "var(--chart-2)" },
-  { id: "humidity", label: "HUMIDITY (%)", unit: "%", color: "var(--chart-3)" },
-  { id: "all", label: "MULTIVARIATE", unit: "", color: "var(--chart-1)" },
+const METRICS: { id: Metric; label: string; unit: string }[] = [
+  { id: "temperature", label: "Temperature (°C)", unit: "°C" },
+  { id: "pressure", label: "Pressure (hPa)", unit: "hPa" },
+  { id: "humidity", label: "Humidity (%)", unit: "%" },
+  { id: "all", label: "Multivariate View", unit: "" },
 ];
 
 export function TelemetryChart({
   stationId,
-  height = 280,
+  height = 300,
 }: {
   stationId: string;
   height?: number;
@@ -68,55 +68,61 @@ export function TelemetryChart({
 
   return (
     <div>
-      {/* Top telemetry status ribbon */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-line/50 pb-2.5">
-        <div className="flex items-center gap-4 font-mono text-[11px]">
+      {/* Top Telemetry Status Ribbon */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
+        <div className="flex flex-wrap items-center gap-4 text-[12px]">
+          {/* Temperature */}
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-primary" />
-            <span className="text-dim">TEMP:</span>
+            <span className="size-2.5 rounded-full bg-primary" />
+            <span className="font-medium text-muted-foreground">Temperature:</span>
             <span
               className={cn(
-                "font-bold",
-                assessment.anomalous ? "text-critical text-[13px]" : "text-primary",
+                "font-mono font-semibold",
+                assessment.anomalous ? "text-critical font-bold text-[13px]" : "text-primary",
               )}
             >
               {latest?.received ? `${latest.temperature.toFixed(1)}°C` : "MISSING"}
             </span>
           </div>
 
+          {/* Pressure */}
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-event" />
-            <span className="text-dim">PRES:</span>
-            <span className="font-bold text-foreground">
+            <span className="size-2.5 rounded-full bg-secondary" />
+            <span className="font-medium text-muted-foreground">Pressure:</span>
+            <span className="font-mono font-semibold text-foreground">
               {latest?.received ? `${latest.pressure.toFixed(1)} hPa` : "—"}
             </span>
           </div>
 
+          {/* Humidity */}
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-ok" />
-            <span className="text-dim">HUM:</span>
-            <span className="font-bold text-foreground">
+            <span className="size-2.5 rounded-full bg-ok" />
+            <span className="font-medium text-muted-foreground">Humidity:</span>
+            <span className="font-mono font-semibold text-foreground">
               {latest?.received ? `${latest.humidity.toFixed(0)}%` : "—"}
             </span>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1.5 border-l border-line/60 pl-3">
-            <span className="text-dim">BASELINE:</span>
-            <span className="text-dim">{expectedNow.temperature.toFixed(1)}°C</span>
+          {/* Baseline info */}
+          <div className="hidden items-center gap-1.5 border-l border-border pl-3 sm:flex">
+            <span className="text-muted-foreground">Baseline:</span>
+            <span className="font-mono text-muted-foreground">
+              {expectedNow.temperature.toFixed(1)}°C
+            </span>
           </div>
         </div>
 
-        {/* Metric mode toggle pills */}
-        <div className="flex gap-1 rounded border border-line/70 bg-background/60 p-0.5">
+        {/* Metric Selector Buttons */}
+        <div className="flex rounded-lg border border-border bg-muted/50 p-0.5">
           {METRICS.map((m) => (
             <button
               key={m.id}
               onClick={() => setMetric(m.id)}
               className={cn(
-                "rounded-sm px-2.5 py-1 font-mono text-[10px] transition-colors",
+                "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
                 metric === m.id
-                  ? "bg-primary font-bold text-primary-foreground shadow-sm"
-                  : "text-dim hover:text-foreground",
+                  ? "bg-card text-foreground font-semibold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {m.label}
@@ -126,47 +132,49 @@ export function TelemetryChart({
       </div>
 
       {/* Chart Canvas */}
-      <div style={{ height }} className="rounded-lg border border-line/60 bg-background/80 p-2.5">
+      <div style={{ height }} className="rounded-xl border border-border bg-card/50 p-3">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -14 }}>
+          <ComposedChart data={data} margin={{ top: 12, right: 16, bottom: 4, left: -10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.6} />
             <XAxis
               dataKey="t"
-              tick={{ fontSize: 9, fill: "var(--dim)", fontFamily: "var(--font-mono)" }}
+              tick={{ fontSize: 10, fill: "var(--dim)" }}
               tickLine={false}
               axisLine={{ stroke: "var(--line)" }}
               minTickGap={35}
             />
             <YAxis
               yAxisId="left"
-              tick={{ fontSize: 9, fill: "var(--dim)", fontFamily: "var(--font-mono)" }}
+              tick={{ fontSize: 10, fill: "var(--dim)" }}
               tickLine={false}
               axisLine={false}
-              width={42}
+              width={40}
               domain={["auto", "auto"]}
             />
             {showPres && !showTemp && (
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fontSize: 9, fill: "var(--dim)", fontFamily: "var(--font-mono)" }}
+                tick={{ fontSize: 10, fill: "var(--dim)" }}
                 tickLine={false}
                 axisLine={false}
-                width={42}
+                width={45}
                 domain={["auto", "auto"]}
               />
             )}
             <Tooltip
               contentStyle={{
-                background: "var(--panel2)",
-                border: "1px solid var(--line)",
-                borderRadius: 8,
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
+                backgroundColor: "var(--panel)",
+                borderColor: "var(--line)",
+                borderRadius: "0.75rem",
+                fontSize: "12px",
+                color: "var(--foreground)",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }}
-              labelStyle={{ color: "var(--dim)" }}
+              labelStyle={{ fontWeight: "600", color: "var(--foreground)" }}
             />
 
-            {/* Station-specific adaptive baseline reference */}
+            {/* Station Adaptive Baseline Reference Line */}
             {showTemp && (
               <ReferenceLine
                 yAxisId="left"
@@ -174,59 +182,63 @@ export function TelemetryChart({
                 stroke="var(--dim)"
                 strokeDasharray="4 4"
                 label={{
-                  value: `adaptive baseline ${expectedNow.temperature.toFixed(1)}°C`,
+                  value: `Baseline ${expectedNow.temperature.toFixed(1)}°C`,
                   fill: "var(--dim)",
-                  fontSize: 9,
+                  fontSize: 10,
                   position: "insideBottomLeft",
                 }}
               />
             )}
 
-            {/* Temperature series */}
+            {/* Temperature series: Enterprise Blue */}
             {showTemp && (
               <Area
                 yAxisId="left"
                 type="monotone"
                 dataKey="temperature"
-                stroke="var(--chart-1)"
-                fill="var(--chart-1)"
-                fillOpacity={0.14}
-                strokeWidth={1.8}
+                name="Temperature (°C)"
+                stroke="var(--color-primary)"
+                fill="var(--color-primary)"
+                fillOpacity={0.12}
+                strokeWidth={2}
                 isAnimationActive={false}
                 connectNulls={false}
               />
             )}
 
-            {/* Pressure series */}
+            {/* Pressure series: Cyan */}
             {showPres && (
               <Line
                 yAxisId={showTemp ? "left" : "right"}
                 type="monotone"
                 dataKey="pressure"
-                stroke="var(--chart-2)"
-                strokeWidth={1.5}
+                name="Pressure (hPa)"
+                stroke="var(--color-secondary)"
+                strokeWidth={1.8}
                 dot={false}
                 isAnimationActive={false}
               />
             )}
 
-            {/* Humidity series */}
+            {/* Humidity series: Green */}
             {showHum && (
               <Line
                 yAxisId="left"
                 type="monotone"
                 dataKey="humidity"
-                stroke="var(--chart-3)"
-                strokeWidth={1.5}
+                name="Humidity (%)"
+                stroke="var(--ok)"
+                strokeWidth={1.8}
                 dot={false}
                 isAnimationActive={false}
               />
             )}
 
-            {/* Anomaly markers */}
+            {/* Anomaly scatter markers: Red */}
             {showTemp && (
               <Scatter
                 yAxisId="left"
+                name="Anomaly Incident"
                 dataKey="anomalyMarker"
                 fill="var(--critical)"
                 shape="circle"
@@ -237,9 +249,12 @@ export function TelemetryChart({
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-2 flex items-center justify-between font-mono text-[9px] text-dim px-1">
-        <span>● RED SCATTER = ANOMALOUS OBSERVATION BLIP</span>
-        <span>DASHED LINE = STATION-SPECIFIC ADAPTIVE BASELINE</span>
+      <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground px-1">
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-critical" />
+          Red markers indicate detected anomalies exceeding adaptive baseline
+        </span>
+        <span>Dashed line indicates station diurnal baseline</span>
       </div>
     </div>
   );
